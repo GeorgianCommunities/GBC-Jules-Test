@@ -494,6 +494,18 @@
     </div>
 
     <script>
+      function escapeHtml(text) {
+        if (text === null || text === undefined) return '';
+        var map = {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#039;'
+        };
+        return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
+      }
+
       var currentUser = null; 
       var globalLotMap = {}; var globalTradeMap = {}; var globalLotOptionsMap = {}; var globalLotHierarchy = {}; 
       var globalCostCodes = []; 
@@ -756,10 +768,10 @@
           for (var j = 0; j < data[i].length; j++) { 
             if (j === 6 || skipColIndices.indexOf(j) > -1) continue; 
             if (i === 0) {
-              html += "<th class='sort-header' onclick=\"sortTable('contractorTable', " + j + ")\">" + data[i][j] + "</th>"; 
+              html += "<th class='sort-header' onclick=\"sortTable('contractorTable', " + j + ")\">" + escapeHtml(data[i][j]) + "</th>";
             } else {
               var safeLabel = String(headers[j]).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
-              html += "<td data-label='" + safeLabel + "'>" + data[i][j] + "</td>"; 
+              html += "<td data-label='" + safeLabel + "'>" + escapeHtml(data[i][j]) + "</td>";
             }
           }
           if (i === 0) {
@@ -991,11 +1003,11 @@
           for (var j = 0; j < maxCols; j++) { 
             if (skipColIndices.indexOf(j) > -1) continue; 
             if (i === 0) {
-              html += "<th class='sort-header' onclick=\"sortTable('lotsTable', " + j + ")\">" + data[i][j] + "</th>"; 
+              html += "<th class='sort-header' onclick=\"sortTable('lotsTable', " + j + ")\">" + escapeHtml(data[i][j]) + "</th>";
             } else {
               var safeLabel = String(headers[j]).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
               var rawValue = String(data[i][j]).trim();
-              var displayValue = rawValue !== "" ? rawValue : "<span style='color:#999; font-style:italic;'>N/A</span>";
+              var displayValue = rawValue !== "" ? escapeHtml(rawValue) : "<span style='color:#999; font-style:italic;'>N/A</span>";
               html += "<td data-label='" + safeLabel + "'>" + displayValue + "</td>"; 
             }
           }
@@ -1014,22 +1026,22 @@
                        "<button class='btn-delete' onclick=\"triggerDeleteLot('" + data[i][0] + "', '" + data[i][1] + "', '" + data[i][2] + "')\">Delete</button></td>"; 
                
                var fUrl = data[i][12] ? data[i][12] : ""; 
-               html += fUrl.indexOf("http") === 0 ? "<td data-label='Lot Folder'><a href='" + fUrl + "' target='_blank' class='btn-folder'>Open Folder</a></td>" : "<td data-label='Lot Folder'><span style='color:#999;font-size:12px;'>No Link</span></td>";
+               html += fUrl.indexOf("http") === 0 ? "<td data-label='Lot Folder'><a href='" + escapeHtml(fUrl) + "' target='_blank' class='btn-folder'>Open Folder</a></td>" : "<td data-label='Lot Folder'><span style='color:#999;font-size:12px;'>No Link</span></td>";
                
                var sUrl = data[i][13] ? data[i][13] : ""; 
                var schedStatus = data[i][14] ? data[i][14] : ""; 
                
                if (sUrl.indexOf("http") === 0) {
                  if (schedStatus === "Executed") {
-                   html += "<td data-label='Schedule'><a href='" + sUrl + "' target='_blank' class='btn-folder' style='background-color: #4a6b5d;'>View Schedule</a></td>";
+                   html += "<td data-label='Schedule'><a href='" + escapeHtml(sUrl) + "' target='_blank' class='btn-folder' style='background-color: #4a6b5d;'>View Schedule</a></td>";
                  } else {
-                   html += "<td data-label='Schedule'><a href='" + sUrl + "' target='_blank' class='btn-folder' style='background-color: #7f8c8d;' title='Schedule has not been moved to the Lot folder yet.'>Pending Execution</a></td>";
+                   html += "<td data-label='Schedule'><a href='" + escapeHtml(sUrl) + "' target='_blank' class='btn-folder' style='background-color: #7f8c8d;' title='Schedule has not been moved to the Lot folder yet.'>Pending Execution</a></td>";
                  }
                } else {
                  html += "<td data-label='Schedule'><span style='color:#999;font-size:12px;'>No Schedule</span></td>";
                }
 
-               var lastTask = data[i][15] ? data[i][15] : "<span style='color:#999;font-size:12px;'><i>No completed tasks</i></span>";
+               var lastTask = data[i][15] ? escapeHtml(data[i][15]) : "<span style='color:#999;font-size:12px;'><i>No completed tasks</i></span>";
                html += "<td data-label='Last Task'>" + lastTask + "</td>";
             }
           }
@@ -1367,20 +1379,21 @@
             if (skipColIndices.indexOf(j) > -1) continue; 
             var cellValue = data[i][j] ? data[i][j].toString() : ""; 
             if (i === 0) { 
-               html += "<th class='sort-header' onclick=\"sortTable('poTable', " + j + ")\">" + cellValue + "</th>"; 
+               html += "<th class='sort-header' onclick=\"sortTable('poTable', " + j + ")\">" + escapeHtml(cellValue) + "</th>";
             } else { 
                var safeLabel = String(headers[j]).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
                if(j === 6 && cellValue.indexOf("http") === 0) { 
-                 html += "<td data-label='" + safeLabel + "'><a href='" + cellValue + "' target='_blank' class='btn-folder'>View PDF</a></td>"; 
+                 html += "<td data-label='" + safeLabel + "'><a href='" + escapeHtml(cellValue) + "' target='_blank' class='btn-folder'>View PDF</a></td>";
                } else if (j === 7) { 
                  var badgeClass = "badge-pending";
+                 var safeVal = escapeHtml(cellValue);
                  if(cellValue === "Open") badgeClass = "badge-open";
                  if(cellValue === "Approved") badgeClass = "badge-approved";
                  if(cellValue === "Closed") badgeClass = "badge-closed";
                  if(cellValue === "Void") badgeClass = "badge-void";
-                 html += "<td data-label='" + safeLabel + "'><span class='badge " + badgeClass + "'>" + cellValue + "</span></td>";
+                 html += "<td data-label='" + safeLabel + "'><span class='badge " + badgeClass + "'>" + safeVal + "</span></td>";
                } else {
-                 html += "<td data-label='" + safeLabel + "'>" + cellValue + "</td>"; 
+                 html += "<td data-label='" + safeLabel + "'>" + escapeHtml(cellValue) + "</td>";
                }
             }
           }

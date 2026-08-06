@@ -168,6 +168,18 @@
     </div>
 
     <script>
+      function escapeHtml(text) {
+        if (text === null || text === undefined) return '';
+        var map = {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#039;'
+        };
+        return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
+      }
+
       var currentHomeowner = null;
       var globalHoWarrantyItems = [];
 
@@ -200,7 +212,7 @@
 
             if (response.folderUrl && response.folderUrl.indexOf("http") === 0) {
               document.getElementById("cpFolderRow").style.display = "flex";
-              document.getElementById("cpFolderBtn").innerHTML = "<a href='" + response.folderUrl + "' target='_blank' class='btn-submit' style='padding: 8px 15px; font-size: 13px; text-decoration:none; display:inline-block; width:auto; background-color:#c6a87c; color:#1c2d42;'>Open My Documents Folder</a>";
+              document.getElementById("cpFolderBtn").innerHTML = "<a href='" + escapeHtml(response.folderUrl) + "' target='_blank' class='btn-submit' style='padding: 8px 15px; font-size: 13px; text-decoration:none; display:inline-block; width:auto; background-color:#c6a87c; color:#1c2d42;'>Open My Documents Folder</a>";
             }
 
             document.getElementById("loginScreen").style.display = "none";
@@ -425,16 +437,16 @@
         } else {
           for (var i = 0; i < items.length; i++) {
             html += "<tr>";
-            html += "<td><b>" + items[i].formType + "</b></td>";
-            html += "<td>" + items[i].itemNum + "</td>";
-            html += "<td>" + items[i].location + (items[i].roomArea ? " / " + items[i].roomArea : "") + "</td>";
-            html += "<td>" + items[i].defectArea + "</td>";
-            html += "<td>" + items[i].description + "</td>";
-            html += "<td>" + items[i].additionalInfo + "</td>";
+            html += "<td><b>" + escapeHtml(items[i].formType) + "</b></td>";
+            html += "<td>" + escapeHtml(items[i].itemNum) + "</td>";
+            html += "<td>" + escapeHtml(items[i].location) + (items[i].roomArea ? " / " + escapeHtml(items[i].roomArea) : "") + "</td>";
+            html += "<td>" + escapeHtml(items[i].defectArea) + "</td>";
+            html += "<td>" + escapeHtml(items[i].description) + "</td>";
+            html += "<td>" + escapeHtml(items[i].additionalInfo) + "</td>";
             
-            var schedDisplay = items[i].scheduledDate ? items[i].scheduledDate : "<i style='color:#999;'>Pending</i>";
+            var schedDisplay = items[i].scheduledDate ? escapeHtml(items[i].scheduledDate) : "<i style='color:#999;'>Pending</i>";
             html += "<td>" + schedDisplay + "</td>";
-            html += "<td>" + items[i].warranted + "</td>";
+            html += "<td>" + escapeHtml(items[i].warranted) + "</td>";
             
             var displayStatus = items[i].status || "Unreviewed";
             var badgeColor = "#1c2d42"; 

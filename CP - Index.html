@@ -261,6 +261,18 @@
     </div>
 
     <script>
+      function escapeHtml(text) {
+        if (text === null || text === undefined) return '';
+        var map = {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#039;'
+        };
+        return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
+      }
+
       var authenticatedTradeUser = "";
       var sessionEmailAddress = "";
       
@@ -621,17 +633,17 @@ events.push(eventObj);
                  sHtml += "<tr>";
               }
               
-              sHtml += "<td data-label='Project'>" + serviceItems[i].project + "</td>";
-              sHtml += "<td data-label='Phase'>" + serviceItems[i].phase + "</td>";
-              sHtml += "<td data-label='Lot #'>" + serviceItems[i].lot + "</td>";
-              sHtml += "<td data-label='Form Type'><span style='color:#4a6b5d; font-weight:bold; font-size:12px;'>" + serviceItems[i].formType + "</span></td>";
-              sHtml += "<td data-label='Item #'>" + serviceItems[i].itemNum + "</td>";
-              sHtml += "<td data-label='Location'>" + serviceItems[i].location + "</td>";
-              sHtml += "<td data-label='Defect Area'>" + serviceItems[i].defectArea + "</td>";
-              sHtml += "<td data-label='Description'>" + serviceItems[i].description + "</td>";
-              sHtml += "<td data-label='Additional Information'><b>" + serviceItems[i].tradeDesc + "</b></td>";
+              sHtml += "<td data-label='Project'>" + escapeHtml(serviceItems[i].project) + "</td>";
+              sHtml += "<td data-label='Phase'>" + escapeHtml(serviceItems[i].phase) + "</td>";
+              sHtml += "<td data-label='Lot #'>" + escapeHtml(serviceItems[i].lot) + "</td>";
+              sHtml += "<td data-label='Form Type'><span style='color:#4a6b5d; font-weight:bold; font-size:12px;'>" + escapeHtml(serviceItems[i].formType) + "</span></td>";
+              sHtml += "<td data-label='Item #'>" + escapeHtml(serviceItems[i].itemNum) + "</td>";
+              sHtml += "<td data-label='Location'>" + escapeHtml(serviceItems[i].location) + "</td>";
+              sHtml += "<td data-label='Defect Area'>" + escapeHtml(serviceItems[i].defectArea) + "</td>";
+              sHtml += "<td data-label='Description'>" + escapeHtml(serviceItems[i].description) + "</td>";
+              sHtml += "<td data-label='Additional Information'><b>" + escapeHtml(serviceItems[i].tradeDesc) + "</b></td>";
               
-              var displaySched = serviceItems[i].scheduledDate ? serviceItems[i].scheduledDate : "<span style='color:#999; font-style:italic;'>TBD</span>";
+              var displaySched = serviceItems[i].scheduledDate ? escapeHtml(serviceItems[i].scheduledDate) : "<span style='color:#999; font-style:italic;'>TBD</span>";
               sHtml += "<td data-label='Scheduled Date'>" + displaySched + "</td>";
               
               var photoVal = serviceItems[i].photoLink || "";
@@ -642,13 +654,13 @@ events.push(eventObj);
                 for (var l = 0; l < links.length; l++) {
                   var cleanLink = links[l].replace("Contractor Photo: ", "").trim();
                   if (cleanLink.indexOf("http") === 0) {
-                    btnHtml += "<a href='" + cleanLink + "' target='_blank' class='btn-folder' style='margin-bottom:4px; display:inline-block;'>View Photo " + pCount + "</a><br>";
+                    btnHtml += "<a href='" + escapeHtml(cleanLink) + "' target='_blank' class='btn-folder' style='margin-bottom:4px; display:inline-block;'>View Photo " + pCount + "</a><br>";
                     pCount++;
                   }
                 }
-                if(btnHtml === "") btnHtml = photoVal; 
+                if(btnHtml === "") btnHtml = escapeHtml(photoVal);
               } else {
-                btnHtml = photoVal;
+                btnHtml = escapeHtml(photoVal);
               }
               sHtml += "<td data-label='Photo Link'>" + btnHtml + "</td>";
               
@@ -681,11 +693,11 @@ events.push(eventObj);
             var maxCols = lots[i].length > 12 ? 12 : lots[i].length;
             for (var j = 0; j < maxCols; j++) {
               if (i === 0) {
-                html += "<th onclick='sortTable(this)' title='Click to sort'>" + lots[i][j] + "</th>";
+                html += "<th onclick='sortTable(this)' title='Click to sort'>" + escapeHtml(lots[i][j]) + "</th>";
               } else {
                 var safeLabel = String(headers[j]).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
                 var cellValue = String(lots[i][j]).trim();
-                var displayValue = cellValue !== "" ? cellValue : "<span style='color:#999; font-style:italic;'>N/A</span>";
+                var displayValue = cellValue !== "" ? escapeHtml(cellValue) : "<span style='color:#999; font-style:italic;'>N/A</span>";
                 html += "<td data-label='" + safeLabel + "'>" + displayValue + "</td>";
               }
             }
@@ -700,7 +712,7 @@ events.push(eventObj);
               
               if (schedUrl.indexOf("http") === 0) {
                 if (schedStatus === "Executed") {
-                  html += "<td data-label='Schedule'><a href='" + schedUrl + "' target='_blank' class='btn-schedule'>View Schedule</a></td>";
+                  html += "<td data-label='Schedule'><a href='" + escapeHtml(schedUrl) + "' target='_blank' class='btn-schedule'>View Schedule</a></td>";
                 } else {
                   html += "<td data-label='Schedule'><span style='color:#7f8c8d; font-size:13px; font-weight:bold;' title='Schedule pending internal execution'>Not Executed</span></td>";
                 }
@@ -708,12 +720,12 @@ events.push(eventObj);
                 html += "<td data-label='Schedule'><span style='color:#999;font-size:12px;'>Unavailable</span></td>";
               }
               
-              var lastTask = lots[i][15] ? lots[i][15] : "<span style='color:#999;font-size:12px;'><i>No completed tasks</i></span>";
+              var lastTask = lots[i][15] ? escapeHtml(lots[i][15]) : "<span style='color:#999;font-size:12px;'><i>No completed tasks</i></span>";
               html += "<td data-label='Last Completed Task'>" + lastTask + "</td>";
 
               var folderUrl = lots[i][12] || ""; // Index 12 corresponds to Column M
               if (folderUrl.indexOf("http") === 0) {
-                  html += "<td data-label='Lot Folder'><a href='" + folderUrl + "' target='_blank' class='btn-folder'>View Folder</a></td>";
+                  html += "<td data-label='Lot Folder'><a href='" + escapeHtml(folderUrl) + "' target='_blank' class='btn-folder'>View Folder</a></td>";
               } else {
                   html += "<td data-label='Lot Folder'><span style='color:#999;font-size:12px;'>Unavailable</span></td>";
               }
@@ -735,19 +747,20 @@ events.push(eventObj);
             for (var j = 0; j < pos[i].length; j++) {
               var val = pos[i][j];
               if (i === 0) {
-                html += "<th onclick='sortTable(this)' title='Click to sort'>" + val + "</th>";
+                html += "<th onclick='sortTable(this)' title='Click to sort'>" + escapeHtml(val) + "</th>";
               } else {
                 var safeLabel = String(headers[j]).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
                 if (j === 6 && val.indexOf("http") === 0) {
-                  html += "<td data-label='" + safeLabel + "'><a href='" + val + "' target='_blank' class='btn-folder'>View Document PDF</a></td>";
+                  html += "<td data-label='" + safeLabel + "'><a href='" + escapeHtml(val) + "' target='_blank' class='btn-folder'>View Document PDF</a></td>";
                 } else if (j === 7) {
                   var badgeClass = "badge-pending";
+                  var safeVal = escapeHtml(val);
                   if (val === "Open") badgeClass = "badge-open";
                   if (val === "Approved") badgeClass = "badge-approved";
                   if (val === "Closed") badgeClass = "badge-closed";
-                  html += "<td data-label='" + safeLabel + "'><span class='badge " + badgeClass + "'>" + val + "</span></td>";
+                  html += "<td data-label='" + safeLabel + "'><span class='badge " + badgeClass + "'>" + safeVal + "</span></td>";
                 } else {
-                  html += "<td data-label='" + safeLabel + "'>" + (val !== "" ? val : "-") + "</td>";
+                  html += "<td data-label='" + safeLabel + "'>" + (val !== "" ? escapeHtml(val) : "-") + "</td>";
                 }
               }
             }
