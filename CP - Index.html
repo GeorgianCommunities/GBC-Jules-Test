@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <!-- FULLCALENDAR LIBRARY -->
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 20px; background-color: #f8f9fc; }
+      .login-container { max-width: 400px; margin: 8% auto; background: white; padding: 25px; border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; }
+      .portal-container { display: none; }
+      
+      .tab { display: flex; flex-wrap: wrap; border: 1px solid #dcdcdc; background-color: #2c3e50; border-radius: 5px 5px 0 0; }
+      .tab button { background-color: inherit; color: #f8f9fc; flex: 1 1 auto; border: none; outline: none; cursor: pointer; padding: 14px 10px; font-size: 14px; text-align: center; font-weight: bold; transition: background-color 0.3s; }
+      .tab button:hover { background-color: #3b536b; color: white; }
+      .tab button.active { background-color: #c6a87c; color: #1c2d42; }
+      
+      .tabcontent { padding: 20px; border: 1px solid #dcdcdc; border-top: none; background: white; border-radius: 0 0 5px 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+      .form-row { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; text-align: left; }
+      .form-row input, .form-row select { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+      textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; font-size: 14px; }
+      
+      .filter-container { background: #e6ecef; padding: 15px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #d1d8dc; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+      .filter-container select { flex: 1; padding: 8px; min-width: 120px; border: 1px solid #ccc; border-radius: 3px; font-family: inherit; }
+
+      .btn-submit { background-color: #1c2d42; color: white; padding: 12px; border: none; cursor: pointer; border-radius: 4px; width: 100%; font-weight: bold; font-size: 15px; transition: 0.2s; }
+      .btn-submit:hover { background-color: #111d2b; }
+      .btn-filter { background-color: #1c2d42; color: white; padding: 8px 15px; border: none; cursor: pointer; border-radius: 3px; font-weight: bold; }
+      .btn-filter:hover { background-color: #111d2b; }
+      .btn-clear { background-color: #7f8c8d; color: white; padding: 8px 15px; border: none; cursor: pointer; border-radius: 3px; }
+      
+      .btn-folder { background-color: #647b8c; color: white; padding: 6px 12px; text-decoration: none; border-radius: 3px; font-size: 13px; display: inline-block; transition: 0.2s; border:none; cursor:pointer;}
+      .btn-folder:hover { background-color: #4a6b5d; }
+      
+      .btn-schedule { background-color: #c6a87c; color: #1c2d42; padding: 6px 12px; text-decoration: none; border-radius: 3px; font-size: 13px; display: inline-block; font-weight: bold; transition: 0.2s; }
+      .btn-schedule:hover { background-color: #b5986c; }
+      
+      table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; background: white; min-width: 700px; }
+      th, td { border: 1px solid #e0e0e0; padding: 10px 8px; text-align: left; }
+      
+      th { background-color: #1c2d42; color: white; font-weight: 600; cursor: pointer; user-select: none; transition: background-color 0.2s; }
+      th:hover { background-color: #2b4566; }
+      
+      tr:nth-child(even) { background-color: #fcfcfc; }
+      
+      #lotsGridBox, #posGridBox, #serviceGridBox { overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
+
+      .badge { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; display: inline-block; letter-spacing: 0.5px; }
+      .badge-open { background-color: #1c2d42; color: white; }
+      .badge-pending { background-color: #c6a87c; color: #1c2d42; }
+      .badge-approved { background-color: #4a6b5d; color: white; }
+      .badge-closed { background-color: #7f8c8d; color: white; } 
+      .badge-void { background-color: #8b3a3a; color: white; } 
+      
+      .settings-panel { max-width: 450px; background: #f8f9fa; border: 1px solid #e0e0e0; padding: 20px; border-radius: 5px; margin-top: 20px; }
+      
+      .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(28, 45, 66, 0.6); }
+      .modal-content { background-color: #fcfcfc; margin: 5% auto; padding: 25px; border: none; width: 90%; max-width: 500px; border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto;}
+      .close { color: #888; float: right; font-size: 28px; font-weight: bold; cursor: pointer; margin-top:-10px;}
+      .close:hover, .close:focus { color: #1c2d42; text-decoration: none; }
+
+      .checkbox-group { border: 1px solid #ccc; border-radius: 3px; padding: 8px; background: white; max-height: 120px; overflow-y: auto; font-size: 13px; line-height: 1.8; display: grid; grid-template-columns: 1fr 1fr; }
+      .checkbox-group label { display: block; cursor: pointer; margin-bottom: 3px; }
+      .checkbox-group input { margin-right: 8px; }
+
+      /* CALENDAR CSS */
+      #calendar { max-width: 1100px; margin: 0 auto; background: white; padding: 15px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+      .fc-event { cursor: pointer; }
+
+      @media (max-width: 768px) {
+        .filter-container { flex-direction: column; align-items: stretch; }
+        .form-row { flex-direction: column; gap: 15px; }
+        .form-row input, .form-row select, .form-row textarea, .form-row div { width: 100%; box-sizing: border-box; }
+        .btn-submit { width: 100%; margin-bottom: 5px; padding: 15px; font-size: 16px; }
+        table, thead, tbody, th, td, tr { display: block; width: 100%; box-sizing: border-box; min-width: unset; }
+        th { display: none; }
+        tr { margin-bottom: 15px; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); background: #fff; }
+        td { border: none; border-bottom: 1px solid #eee; position: relative; padding: 10px 10px 10px 45%; min-height: 24px; text-align: right; font-size: 14px; word-break: break-word; }
+        td:last-child { border-bottom: 0; }
+        td:before { position: absolute; top: 10px; left: 10px; width: 40%; padding-right: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: bold; content: attr(data-label); color: #1c2d42; text-align: left; }
+      }
+    </style>
+  </head>
+  <body>
+
+    <div id="loginScreen" class="login-container">
+      <h2 style="color:#333; margin-top:0;">Georgian Build Connect</h2>
+      <p style="color:#666; font-size:14px; margin-bottom:20px;">Contractor Portal Login</p>
+      <form onsubmit="handlePortalLogin(event)">
+        <div class="form-row">
+          <label style="font-weight:bold; font-size:13px;">Email Address</label>
+          <input type="email" id="loginEmail" placeholder="name@company.com" required>
+        </div>
+        <div class="form-row">
+          <label style="font-weight:bold; font-size:13px;">Portal Passcode</label>
+          <input type="password" id="loginPasscode" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn-submit">Access My Portal</button>
+      </form>
+      <p id="loginError" style="color:red; font-size:13px; margin-top:15px; font-weight:bold;"></p>
+    </div>
+
+    <div id="portalDashboard" class="portal-container">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:10px;">
+        <h2 style="margin:0; color:#333;">Georgian Build Connect - Contractor Portal</h2>
+        <div style="display:flex; align-items:center; gap:15px;">
+          <button id="refreshBtn" class="btn-folder" style="background-color: #1c2d42; font-weight: bold; padding: 8px 12px;" onclick="refreshPortalData()">🔄 Refresh</button>
+          <span style="font-size:14px; background:#e9ecef; padding:6px 12px; border-radius:4px;">User: <b id="userLabel"></b></span>
+        </div>
+      </div>
+      
+      <div class="tab">
+        <button class="tablinks active" onclick="openPortalTab(event, 'ContractorServiceTab')">Service Items</button>
+        <button class="tablinks" onclick="openPortalTab(event, 'ContractorScheduleTab')">My Schedule</button>
+        <button class="tablinks" onclick="openPortalTab(event, 'ContractorLotsTab')">Lot Directory</button>
+        <button class="tablinks" onclick="openPortalTab(event, 'ContractorPOsTab')">My Purchase Orders</button>
+        <button class="tablinks" onclick="openPortalTab(event, 'ContractorSettingsTab')">Account Security</button>
+      </div>
+
+      <div id="ContractorServiceTab" class="tabcontent" style="display:block;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; margin-bottom: 10px;">
+          <h3 style="margin:0;">My Assigned Service Items</h3>
+          <button type="button" class="btn-folder" style="padding: 10px 15px; font-weight:bold; font-size:14px; border-radius:4px;" onclick="openReportModal()">🖨️ Print Report</button>
+        </div>
+        
+        <div class="filter-container">
+          <select id="csProject"><option value="">All Projects</option></select>
+          <select id="csPhase"><option value="">All Phases</option></select>
+          <select id="csLot"><option value="">All Lots</option></select>
+          <select id="csStatus"><option value="">All Statuses</option></select>
+          <button type="button" class="btn-filter" onclick="applyServiceFilters()">Apply Filters</button>
+          <button type="button" class="btn-clear" onclick="clearServiceFilters()">Clear</button>
+        </div>
+        
+        <div id="serviceGridBox">Retrieving your assigned items... (This may take a moment)</div>
+      </div>
+
+      <div id="ContractorScheduleTab" class="tabcontent" style="display:none;">
+        <h3 style="margin-top:0;">My Upcoming Schedule</h3>
+        <p style="color:#666; font-size:13px; margin-bottom:15px;">Displays all your assigned tasks with confirmed dates. Click on an event to view details.</p>
+        <div id="calendar"></div>
+      </div>
+
+      <div id="ContractorLotsTab" class="tabcontent" style="display:none;">
+        <h3>Lot Directory Scope</h3>
+        
+        <div class="filter-container">
+          <select id="clProject"><option value="">All Projects</option></select>
+          <select id="clPhase"><option value="">All Phases</option></select>
+          <select id="clLot"><option value="">All Lots</option></select>
+          <button type="button" class="btn-filter" onclick="applyLotFilters()">Apply Filters</button>
+          <button type="button" class="btn-clear" onclick="clearLotFilters()">Clear</button>
+        </div>
+        <div id="lotsGridBox">Retrieving lot files...</div>
+      </div>
+
+      <div id="ContractorPOsTab" class="tabcontent" style="display:none;">
+        <h3>My Purchase Orders</h3>
+        
+        <div class="filter-container">
+          <select id="cpProject"><option value="">All Projects</option></select>
+          <select id="cpStatus"><option value="">All Statuses</option></select>
+          <button type="button" class="btn-filter" onclick="applyPOFilters()">Apply Filters</button>
+          <button type="button" class="btn-clear" onclick="clearPOFilters()">Clear</button>
+        </div>
+        <div id="posGridBox">Retrieving purchase ledger...</div>
+      </div>
+
+      <div id="ContractorSettingsTab" class="tabcontent" style="display:none;">
+        <h3>Account Security</h3>
+        <div class="settings-panel">
+          <form onsubmit="handlePasswordUpdate(event)">
+            <div class="form-row">
+              <label style="font-weight:bold; font-size:13px;">Current Passcode</label>
+              <input type="password" id="oldPasscode" required>
+            </div>
+            <div class="form-row">
+              <label style="font-weight:bold; font-size:13px;">New Passcode</label>
+              <input type="password" id="newPasscode" placeholder="Minimum 6 characters recommended" required>
+            </div>
+            <div class="form-row">
+              <label style="font-weight:bold; font-size:13px;">Confirm New Passcode</label>
+              <input type="password" id="confirmNewPasscode" required>
+            </div>
+            <button type="submit" class="btn-submit">Save New Passcode</button>
+          </form>
+          <p id="settingsMsg" style="font-size:13px; margin-top:12px; font-weight:bold;"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Completion Modal Form -->
+    <div id="completionModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeCompletionModal()">x</span>
+        <h3 id="completionTitle" style="margin-top:0;">Complete Service Item</h3>
+        <form id="completionForm" onsubmit="handleCompletionSubmit(event)">
+          <div class="form-row">
+            <label style="font-weight:bold; font-size:13px;">Description of Work Completed (Required)</label>
+            <textarea id="completionNotes" rows="4" placeholder="Briefly describe the repair or service performed..." required></textarea>
+          </div>
+          <div class="form-row">
+            <label style="font-weight:bold; font-size:13px;">Attach Photo (Optional)</label>
+            <input type="file" id="completionPhoto" accept="image/*">
+          </div>
+          <input type="hidden" id="compProject">
+          <input type="hidden" id="compPhase">
+          <input type="hidden" id="compLot">
+          <input type="hidden" id="compForm">
+          <input type="hidden" id="compItem">
+          <button type="submit" class="btn-submit" id="btnSubmitCompletion" style="margin-top: 10px;">Submit Completion</button>
+          <p id="completionStatusMsg" style="margin-top:10px; font-size:13px; font-weight:bold;"></p>
+        </form>
+      </div>
+    </div>
+    
+    <!-- PRINT REPORT MODAL -->
+    <div id="reportModal" class="modal">
+      <div class="modal-content" style="max-width: 600px;">
+        <span class="close" onclick="closeReportModal()">x</span>
+        <h3 style="margin-top:0;">Generate Service Report</h3>
+        
+        <h4 style="margin-bottom:5px;">1. Report Filters</h4>
+        <div style="display:flex; gap:10px; margin-bottom:10px;">
+          <select id="repProject" style="flex:1; padding:8px; border:1px solid #ccc; border-radius:4px;"><option value="">All Projects</option></select>
+          <select id="repPhase" style="flex:1; padding:8px; border:1px solid #ccc; border-radius:4px;"><option value="">All Phases</option></select>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <select id="repLot" style="flex:1; padding:8px; border:1px solid #ccc; border-radius:4px;"><option value="">All Lots</option></select>
+          <select id="repStatus" style="flex:1; padding:8px; border:1px solid #ccc; border-radius:4px;"><option value="">All Statuses</option></select>
+        </div>
+        
+        <h4 style="margin-top:20px; margin-bottom:5px;">2. Columns to Include</h4>
+        <div class="checkbox-group" id="reportColumnsGroup" style="max-height: 250px;">
+            <label><input type="checkbox" value="Project" checked> Project</label>
+            <label><input type="checkbox" value="Phase" checked> Phase</label>
+            <label><input type="checkbox" value="Lot #" checked> Lot #</label>
+            <label><input type="checkbox" value="Form Type" checked> Form Type</label>
+            <label><input type="checkbox" value="Item #" checked> Item #</label>
+            <label><input type="checkbox" value="Location" checked> Location</label>
+            <label><input type="checkbox" value="Defect Area" checked> Defect Area</label>
+            <label><input type="checkbox" value="Description" checked> Description</label>
+            <label><input type="checkbox" value="Additional Information" checked> Additional Information</label>
+            <label><input type="checkbox" value="Scheduled Date" checked> Scheduled Date</label>
+            <label><input type="checkbox" value="Photo Link" checked> Photo Link</label>
+            <label><input type="checkbox" value="Status" checked> Status</label>
+        </div>
+        
+        <button type="button" class="btn-submit" style="width:100%; margin-top:20px;" id="btnGenerateReport" onclick="generateReport()">Create PDF Report</button>
+        <span id="reportStatusMsg" style="color:#4a6b5d; font-weight:bold; display:block; margin-top:10px; text-align:center;"></span>
+      </div>
+    </div>
+
+    <!-- SCHEDULE EVENT MODAL -->
+    <div id="eventModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeEventModal()">x</span>
+        <h3 id="eventModalTitle" style="margin-top:0; color:#1c2d42;">Task Details</h3>
+        <hr style="border:0; border-top:1px solid #eee; margin-bottom:15px;">
+        <div id="eventModalBody" style="line-height: 1.8; font-size: 14px;"></div>
+      </div>
+    </div>
+
+    <script>
+      var authenticatedTradeUser = "";
+      var sessionEmailAddress = "";
+      
+      // Globals for Data Storage
+      var windowContractorItems = [];
+      var windowContractorLots = [];
+      var windowContractorPOs = [];
+      var calendar;
+
+      // Make sure modals close when clicking outside
+      window.onclick = function(event) {
+        if (event.target == document.getElementById("completionModal")) document.getElementById("completionModal").style.display = "none";
+        if (event.target == document.getElementById("reportModal")) document.getElementById("reportModal").style.display = "none";
+        if (event.target == document.getElementById("eventModal")) document.getElementById("eventModal").style.display = "none";
+      }
+
+      function handlePortalLogin(event) {
+        event.preventDefault();
+        var email = document.getElementById("loginEmail").value;
+        var code = document.getElementById("loginPasscode").value;
+        document.getElementById("loginError").innerText = "Authenticating secure link...";
+
+        google.script.run.withSuccessHandler(function(response) {
+          if (response.success) {
+            authenticatedTradeUser = response.trade;
+            sessionEmailAddress = response.email;
+            document.getElementById("userLabel").innerText = response.trade + " (" + response.email + ")";
+            document.getElementById("loginScreen").style.display = "none";
+            document.getElementById("portalDashboard").style.display = "block";
+            loadPortalData();
+          } else {
+            document.getElementById("loginError").innerText = response.message;
+          }
+        }).validateContractorLogin(email, code);
+      }
+
+      function handlePasswordUpdate(event) {
+        event.preventDefault();
+        var oldCode = document.getElementById("oldPasscode").value;
+        var newCode = document.getElementById("newPasscode").value;
+        var confirmCode = document.getElementById("confirmNewPasscode").value;
+        var msgBox = document.getElementById("settingsMsg");
+
+        if (newCode !== confirmCode) {
+          msgBox.style.color = "#8b3a3a";
+          msgBox.innerText = "Error: New passcode entries do not match.";
+          return;
+        }
+        msgBox.style.color = "#c6a87c";
+        msgBox.innerText = "Encrypting structural update lines...";
+
+        google.script.run.withSuccessHandler(function(response) {
+          if (response.success) {
+            msgBox.style.color = "#4a6b5d";
+            document.getElementById("oldPasscode").value = "";
+            document.getElementById("newPasscode").value = "";
+            document.getElementById("confirmNewPasscode").value = "";
+          } else {
+            msgBox.style.color = "#8b3a3a";
+          }
+          msgBox.innerText = " " + response.message;
+        }).updateContractorPassword(sessionEmailAddress, oldCode, newCode);
+      }
+
+      function openCompletionModal(project, phase, lot, formType, itemNum) {
+        document.getElementById("completionModal").style.display = "block";
+        document.getElementById("completionTitle").innerText = "Complete Item #" + itemNum;
+        document.getElementById("compProject").value = project;
+        document.getElementById("compPhase").value = phase;
+        document.getElementById("compLot").value = lot;
+        document.getElementById("compForm").value = formType;
+        document.getElementById("compItem").value = itemNum;
+        
+        document.getElementById("completionNotes").value = "";
+        document.getElementById("completionPhoto").value = "";
+        document.getElementById("completionStatusMsg").innerText = "";
+        
+        var btn = document.getElementById("btnSubmitCompletion");
+        btn.disabled = false;
+        btn.innerText = "Submit Completion";
+      }
+
+      function closeCompletionModal() {
+        document.getElementById("completionModal").style.display = "none";
+      }
+
+      function closeEventModal() { 
+        document.getElementById('eventModal').style.display = 'none'; 
+      }
+
+      function handleCompletionSubmit(event) {
+        event.preventDefault();
+        var btn = document.getElementById("btnSubmitCompletion");
+        var msg = document.getElementById("completionStatusMsg");
+        
+        btn.disabled = true;
+        btn.innerText = "Processing & Uploading...";
+        msg.style.color = "#1c2d42";
+        msg.innerText = "Please wait, uploading to Google Drive...";
+
+        var project = document.getElementById("compProject").value;
+        var phase = document.getElementById("compPhase").value;
+        var lot = document.getElementById("compLot").value;
+        var formType = document.getElementById("compForm").value;
+        var itemNum = document.getElementById("compItem").value;
+        var notes = document.getElementById("completionNotes").value;
+        
+        var fileInput = document.getElementById("completionPhoto");
+        
+        if (fileInput.files.length > 0) {
+            var file = fileInput.files[0];
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var base64Data = e.target.result.split(',')[1];
+                google.script.run.withSuccessHandler(completionCallback).submitItemCompletion(
+                    authenticatedTradeUser, project, phase, lot, formType, itemNum, notes, base64Data, file.name, file.type
+                );
+            };
+            reader.readAsDataURL(file);
+        } else {
+            google.script.run.withSuccessHandler(completionCallback).submitItemCompletion(
+                authenticatedTradeUser, project, phase, lot, formType, itemNum, notes, null, null, null
+            );
+        }
+      }
+
+      function completionCallback(res) {
+        var msg = document.getElementById("completionStatusMsg");
+        var btn = document.getElementById("btnSubmitCompletion");
+        if (res.success) {
+            msg.style.color = "#4a6b5d";
+            msg.innerText = "Success! " + res.message;
+            setTimeout(function() { 
+                closeCompletionModal(); 
+                loadPortalData(); 
+            }, 2000);
+        } else {
+            msg.style.color = "#8b3a3a";
+            msg.innerText = res.message;
+            btn.disabled = false;
+            btn.innerText = "Submit Completion";
+        }
+      }
+
+      function populateFilterSelectHTML(id, arr, txt) {
+        var sel = document.getElementById(id); if(!sel) return;
+        var html = "<option value=''>" + txt + "</option>";
+        for (var i = 0; i < arr.length; i++) {
+          var strValue = String(arr[i]); var safeValue = strValue.replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+          html += "<option value='" + safeValue + "'>" + strValue + "</option>";
+        }
+        sel.innerHTML = html;
+      }
+
+      function populateAllDropdowns() {
+          var sProj=[], sPhase=[], sLot=[], sStat=[];
+          windowContractorItems.forEach(function(i){
+             if (i.formType !== "Construction Schedule") {
+                 if(i.project && sProj.indexOf(i.project)===-1) sProj.push(i.project);
+                 if(i.phase && sPhase.indexOf(i.phase)===-1) sPhase.push(i.phase);
+                 if(i.lot && sLot.indexOf(i.lot)===-1) sLot.push(i.lot);
+                 var statusLabel = i.isRejected ? "Item Not Approved" : (i.status || "Unreviewed");
+                 if(sStat.indexOf(statusLabel)===-1) sStat.push(statusLabel);
+             }
+          });
+          populateFilterSelectHTML("csProject", sProj.sort(), "All Projects");
+          populateFilterSelectHTML("csPhase", sPhase.sort(), "All Phases");
+          populateFilterSelectHTML("csLot", sLot.sort(), "All Lots");
+          populateFilterSelectHTML("csStatus", sStat.sort(), "All Statuses");
+
+          var lProj=[], lPhase=[], lLot=[];
+          if(windowContractorLots.length > 1) {
+             for(var r=1; r<windowContractorLots.length; r++) {
+                var row = windowContractorLots[r];
+                if(row[0] && lProj.indexOf(row[0])===-1) lProj.push(row[0]);
+                if(row[1] && lPhase.indexOf(row[1])===-1) lPhase.push(row[1]);
+                if(row[2] && lLot.indexOf(row[2])===-1) lLot.push(row[2]);
+             }
+          }
+          populateFilterSelectHTML("clProject", lProj.sort(), "All Projects");
+          populateFilterSelectHTML("clPhase", lPhase.sort(), "All Phases");
+          populateFilterSelectHTML("clLot", lLot.sort(), "All Lots");
+
+          var pProj=[], pStat=[];
+          if(windowContractorPOs.length > 1) {
+             for(var r=1; r<windowContractorPOs.length; r++) {
+                var row = windowContractorPOs[r];
+                if(row[1] && pProj.indexOf(row[1])===-1) pProj.push(row[1]);
+                if(row[7] && pStat.indexOf(row[7])===-1) pStat.push(row[7]);
+             }
+          }
+          populateFilterSelectHTML("cpProject", pProj.sort(), "All Projects");
+          populateFilterSelectHTML("cpStatus", pStat.sort(), "All Statuses");
+      }
+
+      function refreshPortalData() {
+        var btn = document.getElementById("refreshBtn");
+        btn.innerText = "⏳ Syncing...";
+        btn.disabled = true;
+        loadPortalData();
+        setTimeout(function() {
+          btn.innerText = "🔄 Refresh";
+          btn.disabled = false;
+        }, 2000);
+      }
+
+      function loadPortalData() {
+        // Load POs
+        google.script.run.withSuccessHandler(function(pos) {
+          windowContractorPOs = pos;
+          renderPOsTable(pos);
+          populateAllDropdowns();
+        }).getContractorPOs(authenticatedTradeUser);
+
+        // Fetch Service Items (Scans Warranty Folders explicitly)
+        google.script.run.withSuccessHandler(function(items) {
+          windowContractorItems = items; 
+          renderServiceTable(items);
+          initCalendar(items); 
+          populateAllDropdowns(); 
+
+          // Extract the full item data dynamically to the Lot Directory scan
+          google.script.run.withSuccessHandler(function(lots) {
+            windowContractorLots = lots;
+            renderLotsTable(lots);
+            populateAllDropdowns();
+          }).getContractorLots(authenticatedTradeUser, items);
+
+        }).getContractorServiceItems(authenticatedTradeUser);
+      }
+
+      // --- FULLCALENDAR INITIALIZATION ---
+      function initCalendar(items) {
+          var scheduledItems = items.filter(function(i) {
+              return i.scheduledDate && String(i.scheduledDate).trim() !== "" && String(i.scheduledDate).toLowerCase() !== "tbd";
+          });
+
+          var colorPalette = ['#1c2d42', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#e74c3c'];
+          var projectColors = {};
+          var colorIndex = 0;
+          var events = [];
+
+          scheduledItems.forEach(function(item) {
+              var proj = item.project;
+              if (!projectColors[proj]) {
+                projectColors[proj] = colorPalette[colorIndex % colorPalette.length];
+                colorIndex++;
+              }
+
+              var d = new Date(item.scheduledDate);
+              if (isNaN(d.getTime())) return;
+
+              d.setHours(d.getHours() + 12);
+
+             var yyyy = d.getFullYear();
+var mm = ("0" + (d.getMonth() + 1)).slice(-2);
+var dd = ("0" + d.getDate()).slice(-2);
+var isoDate = yyyy + "-" + mm + "-" + dd;
+
+var isoEndDate = null;
+var displayDateStr = item.scheduledDate;
+var endD = null;
+
+// 1. Try to use finishDate (Column I)
+if (item.finishDate && String(item.finishDate).trim() !== "") {
+    endD = new Date(item.finishDate);
+    endD.setHours(endD.getHours() + 12); // Normalize timezone
+} 
+
+// 2. Fallback to Duration (Column E) if finishDate is missing or invalid
+if ((!endD || isNaN(endD.getTime())) && item.duration && !isNaN(parseFloat(item.duration))) {
+    var days = Math.ceil(parseFloat(item.duration));
+    if (days > 1) {
+        endD = new Date(d.getTime()); // Copy the start date
+        endD.setDate(endD.getDate() + (days - 1)); // Calculate end date
+    }
+}
+
+// 3. Format for FullCalendar (if the task spans more than 1 day)
+if (endD && !isNaN(endD.getTime()) && endD.getTime() > d.getTime()) {
+    // Update the visual string for the pop-up modal
+    displayDateStr += " to " + (endD.getMonth() + 1) + "/" + endD.getDate() + "/" + endD.getFullYear();
+    
+    // FullCalendar requires end dates to be EXCLUSIVE, so we add 1 final day
+    endD.setDate(endD.getDate() + 1); 
+    
+    var e_yyyy = endD.getFullYear();
+    var e_mm = ("0" + (endD.getMonth() + 1)).slice(-2);
+    var e_dd = ("0" + endD.getDate()).slice(-2);
+    isoEndDate = e_yyyy + "-" + e_mm + "-" + e_dd;
+}
+
+var eventObj = {
+  title: "Lot " + item.lot + " - " + item.description, 
+  start: isoDate,
+  color: projectColors[proj],
+  extendedProps: {
+    project: proj,
+    phase: item.phase,
+    lot: item.lot,
+    form: item.formType,
+    item: item.itemNum,
+    desc: item.description,
+    originalDateStr: displayDateStr
+  }
+};
+
+if (isoEndDate) {
+    eventObj.end = isoEndDate;
+}
+
+events.push(eventObj);
+          });
+
+          var calendarEl = document.getElementById('calendar');
+          if(calendar) { calendar.destroy(); }
+
+          calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+              left: 'prev,next today',
+              center: 'title',
+              right: 'dayGridMonth,timeGridWeek'
+            },
+            events: events,
+            eventClick: function(info) {
+               var p = info.event.extendedProps;
+               document.getElementById('eventModalTitle').innerText = "Task details: Lot " + p.lot;
+               document.getElementById('eventModalBody').innerHTML = 
+                  "<b>Project:</b> " + p.project + " (Phase " + p.phase + ")<br>" +
+                  "<b>Task / Form:</b> " + p.form + "<br>" +
+                  "<b>Item #:</b> " + p.item + "<br>" +
+                  "<b>Description:</b> " + (p.desc ? p.desc : "<i>N/A</i>") + "<br>" + 
+                  "<b>Scheduled Date:</b> " + p.originalDateStr;
+               document.getElementById('eventModal').style.display = 'block';
+            }
+          });
+          
+          if (document.getElementById('ContractorScheduleTab').style.display === 'block') {
+             calendar.render();
+          }
+      }
+
+      function renderServiceTable(items) {
+          var sHtml = "<table><tr><th onclick='sortTable(this)'>Project</th><th onclick='sortTable(this)'>Phase</th><th onclick='sortTable(this)'>Lot #</th><th onclick='sortTable(this)'>Form Type</th><th onclick='sortTable(this)'>Item #</th><th onclick='sortTable(this)'>Location</th><th onclick='sortTable(this)'>Defect Area</th><th onclick='sortTable(this)'>Description</th><th onclick='sortTable(this)'>Additional Information</th><th onclick='sortTable(this)'>Scheduled Date</th><th onclick='sortTable(this)'>Photo Link</th><th>Status</th></tr>";
+          
+          var serviceItems = items ? items.filter(function(i) {
+              return i.formType !== "Construction Schedule";
+          }) : [];
+
+          if (serviceItems.length === 0) {
+            sHtml = "<p style='color:#777; font-style:italic;'>You currently have no service items matching these criteria.</p>";
+          } else {
+            for (var i = 0; i < serviceItems.length; i++) {
+              if (serviceItems[i].isRejected) {
+                 sHtml += "<tr style='background-color:#fff5f5; border-left: 3px solid #8b3a3a;'>";
+              } else {
+                 sHtml += "<tr>";
+              }
+              
+              sHtml += "<td data-label='Project'>" + serviceItems[i].project + "</td>";
+              sHtml += "<td data-label='Phase'>" + serviceItems[i].phase + "</td>";
+              sHtml += "<td data-label='Lot #'>" + serviceItems[i].lot + "</td>";
+              sHtml += "<td data-label='Form Type'><span style='color:#4a6b5d; font-weight:bold; font-size:12px;'>" + serviceItems[i].formType + "</span></td>";
+              sHtml += "<td data-label='Item #'>" + serviceItems[i].itemNum + "</td>";
+              sHtml += "<td data-label='Location'>" + serviceItems[i].location + "</td>";
+              sHtml += "<td data-label='Defect Area'>" + serviceItems[i].defectArea + "</td>";
+              sHtml += "<td data-label='Description'>" + serviceItems[i].description + "</td>";
+              sHtml += "<td data-label='Additional Information'><b>" + serviceItems[i].tradeDesc + "</b></td>";
+              
+              var displaySched = serviceItems[i].scheduledDate ? serviceItems[i].scheduledDate : "<span style='color:#999; font-style:italic;'>TBD</span>";
+              sHtml += "<td data-label='Scheduled Date'>" + displaySched + "</td>";
+              
+              var photoVal = serviceItems[i].photoLink || "";
+              var btnHtml = "";
+              if (photoVal.indexOf("http") > -1) {
+                var links = photoVal.split(/\n+/);
+                var pCount = 1;
+                for (var l = 0; l < links.length; l++) {
+                  var cleanLink = links[l].replace("Contractor Photo: ", "").trim();
+                  if (cleanLink.indexOf("http") === 0) {
+                    btnHtml += "<a href='" + cleanLink + "' target='_blank' class='btn-folder' style='margin-bottom:4px; display:inline-block;'>View Photo " + pCount + "</a><br>";
+                    pCount++;
+                  }
+                }
+                if(btnHtml === "") btnHtml = photoVal; 
+              } else {
+                btnHtml = photoVal;
+              }
+              sHtml += "<td data-label='Photo Link'>" + btnHtml + "</td>";
+              
+              if (serviceItems[i].isRejected) {
+                  sHtml += "<td data-label='Status'><span class='badge' style='background-color:#8b3a3a; color:white; margin-bottom:5px;'>Item Not Approved</span><br><button class='btn-folder' style='background-color:#8b3a3a; font-weight:bold;' onclick='openCompletionModal(\"" + serviceItems[i].project + "\", \"" + serviceItems[i].phase + "\", \"" + serviceItems[i].lot + "\", \"" + serviceItems[i].formType + "\", \"" + serviceItems[i].itemNum + "\")'>Re-Submit Repair</button></td>";
+              } else if (serviceItems[i].status === "Completed") {
+                  sHtml += "<td data-label='Status'><span class='badge' style='background-color:#2ecc71; color:white;'>Completed</span></td>";
+              } else if (serviceItems[i].status === "Approved") {
+                  sHtml += "<td data-label='Status'><span class='badge' style='background-color:#2c3e50; color:white;'>Approved</span></td>";
+              } else {
+                  sHtml += "<td data-label='Status'><button class='btn-folder' style='background-color:#c6a87c; color:#1c2d42; font-weight:bold;' onclick='openCompletionModal(\"" + serviceItems[i].project + "\", \"" + serviceItems[i].phase + "\", \"" + serviceItems[i].lot + "\", \"" + serviceItems[i].formType + "\", \"" + serviceItems[i].itemNum + "\")'>Mark as completed</button></td>";
+              }
+              
+              sHtml += "</tr>";
+            }
+            sHtml += "</table>";
+          }
+          document.getElementById("serviceGridBox").innerHTML = sHtml;
+      }
+
+      function renderLotsTable(lots) {
+          if(!lots || lots.length <= 1) {
+            document.getElementById("lotsGridBox").innerHTML = "<p style='color:#777; font-style:italic;'>No lots matching these criteria.</p>";
+            return;
+          }
+          var headers = lots[0];
+          var html = "<table>";
+          for (var i = 0; i < lots.length; i++) {
+            html += "<tr>";
+            var maxCols = lots[i].length > 12 ? 12 : lots[i].length;
+            for (var j = 0; j < maxCols; j++) {
+              if (i === 0) {
+                html += "<th onclick='sortTable(this)' title='Click to sort'>" + lots[i][j] + "</th>";
+              } else {
+                var safeLabel = String(headers[j]).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+                var cellValue = String(lots[i][j]).trim();
+                var displayValue = cellValue !== "" ? cellValue : "<span style='color:#999; font-style:italic;'>N/A</span>";
+                html += "<td data-label='" + safeLabel + "'>" + displayValue + "</td>";
+              }
+            }
+            
+            if (i === 0) {
+              html += "<th onclick='sortTable(this)' title='Click to sort'>Schedule</th>";
+              html += "<th onclick='sortTable(this)' title='Click to sort'>Last Completed Task</th>";
+              html += "<th onclick='sortTable(this)' title='Click to sort'>Lot Folder</th>";
+            } else {
+              var schedUrl = lots[i][13] || "";
+              var schedStatus = lots[i][14] || "";
+              
+              if (schedUrl.indexOf("http") === 0) {
+                if (schedStatus === "Executed") {
+                  html += "<td data-label='Schedule'><a href='" + schedUrl + "' target='_blank' class='btn-schedule'>View Schedule</a></td>";
+                } else {
+                  html += "<td data-label='Schedule'><span style='color:#7f8c8d; font-size:13px; font-weight:bold;' title='Schedule pending internal execution'>Not Executed</span></td>";
+                }
+              } else {
+                html += "<td data-label='Schedule'><span style='color:#999;font-size:12px;'>Unavailable</span></td>";
+              }
+              
+              var lastTask = lots[i][15] ? lots[i][15] : "<span style='color:#999;font-size:12px;'><i>No completed tasks</i></span>";
+              html += "<td data-label='Last Completed Task'>" + lastTask + "</td>";
+
+              var folderUrl = lots[i][12] || ""; // Index 12 corresponds to Column M
+              if (folderUrl.indexOf("http") === 0) {
+                  html += "<td data-label='Lot Folder'><a href='" + folderUrl + "' target='_blank' class='btn-folder'>View Folder</a></td>";
+              } else {
+                  html += "<td data-label='Lot Folder'><span style='color:#999;font-size:12px;'>Unavailable</span></td>";
+              }
+            }
+            html += "</tr>";
+          }
+          document.getElementById("lotsGridBox").innerHTML = html + "</table>";
+      }
+
+      function renderPOsTable(pos) {
+          if (pos.length <= 1) {
+            document.getElementById("posGridBox").innerHTML = "<p style='color:#777; font-style:italic;'>No purchase orders matching these criteria.</p>";
+            return;
+          }
+          var headers = pos[0];
+          var html = "<table>";
+          for (var i = 0; i < pos.length; i++) {
+            html += "<tr>";
+            for (var j = 0; j < pos[i].length; j++) {
+              var val = pos[i][j];
+              if (i === 0) {
+                html += "<th onclick='sortTable(this)' title='Click to sort'>" + val + "</th>";
+              } else {
+                var safeLabel = String(headers[j]).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+                if (j === 6 && val.indexOf("http") === 0) {
+                  html += "<td data-label='" + safeLabel + "'><a href='" + val + "' target='_blank' class='btn-folder'>View Document PDF</a></td>";
+                } else if (j === 7) {
+                  var badgeClass = "badge-pending";
+                  if (val === "Open") badgeClass = "badge-open";
+                  if (val === "Approved") badgeClass = "badge-approved";
+                  if (val === "Closed") badgeClass = "badge-closed";
+                  html += "<td data-label='" + safeLabel + "'><span class='badge " + badgeClass + "'>" + val + "</span></td>";
+                } else {
+                  html += "<td data-label='" + safeLabel + "'>" + (val !== "" ? val : "-") + "</td>";
+                }
+              }
+            }
+            html += "</tr>";
+          }
+          document.getElementById("posGridBox").innerHTML = html + "</table>";
+      }
+
+      function applyServiceFilters() {
+         var proj = document.getElementById("csProject").value.toLowerCase();
+         var phase = document.getElementById("csPhase").value.toLowerCase();
+         var lot = document.getElementById("csLot").value.toLowerCase();
+         var stat = document.getElementById("csStatus").value.toLowerCase();
+         
+         var filtered = windowContractorItems.filter(function(item) {
+            if (item.formType === "Construction Schedule") return false;
+            
+            if (proj && item.project.toLowerCase() !== proj) return false;
+            if (phase && item.phase.toLowerCase() !== phase) return false;
+            if (lot && item.lot.toLowerCase() !== lot) return false;
+            
+            var itemStatusLabel = item.isRejected ? "item not approved" : (item.status ? item.status.toLowerCase() : "unreviewed");
+            if (stat && itemStatusLabel !== stat) return false;
+            
+            return true;
+         });
+         renderServiceTable(filtered);
+      }
+
+      function clearServiceFilters() {
+         document.getElementById("csProject").value = "";
+         document.getElementById("csPhase").value = "";
+         document.getElementById("csLot").value = "";
+         document.getElementById("csStatus").value = "";
+         renderServiceTable(windowContractorItems);
+      }
+
+      function applyLotFilters() {
+         var proj = document.getElementById("clProject").value.toLowerCase();
+         var phase = document.getElementById("clPhase").value.toLowerCase();
+         var lot = document.getElementById("clLot").value.toLowerCase();
+         
+         if(windowContractorLots.length <= 1) return;
+         var headers = windowContractorLots[0];
+         var filtered = [headers];
+         
+         for(var i=1; i<windowContractorLots.length; i++) {
+            var rProj = String(windowContractorLots[i][0]).toLowerCase();
+            var rPhase = String(windowContractorLots[i][1]).toLowerCase();
+            var rLot = String(windowContractorLots[i][2]).toLowerCase();
+            if (proj && rProj !== proj) continue;
+            if (phase && rPhase !== phase) continue;
+            if (lot && rLot !== lot) continue;
+            filtered.push(windowContractorLots[i]);
+         }
+         renderLotsTable(filtered);
+      }
+
+      function clearLotFilters() {
+         document.getElementById("clProject").value = "";
+         document.getElementById("clPhase").value = "";
+         document.getElementById("clLot").value = "";
+         renderLotsTable(windowContractorLots);
+      }
+
+      function applyPOFilters() {
+         var proj = document.getElementById("cpProject").value.toLowerCase();
+         var stat = document.getElementById("cpStatus").value.toLowerCase();
+         
+         if(windowContractorPOs.length <= 1) return;
+         var headers = windowContractorPOs[0];
+         var filtered = [headers];
+         
+         for(var i=1; i<windowContractorPOs.length; i++) {
+            var rProj = String(windowContractorPOs[i][1]).toLowerCase();
+            var rStat = String(windowContractorPOs[i][7]).toLowerCase();
+            if (proj && rProj !== proj) continue;
+            if (stat && rStat !== stat) continue;
+            filtered.push(windowContractorPOs[i]);
+         }
+         renderPOsTable(filtered);
+      }
+
+      function clearPOFilters() {
+         document.getElementById("cpProject").value = "";
+         document.getElementById("cpStatus").value = "";
+         renderPOsTable(windowContractorPOs);
+      }
+
+      function openPortalTab(evt, tabName) {
+        var tabcontent = document.getElementsByClassName("tabcontent");
+        for (var i = 0; i < tabcontent.length; i++) tabcontent[i].style.display = "none";
+        var tablinks = document.getElementsByClassName("tablinks");
+        for (var i = 0; i < tablinks.length; i++) tablinks[i].className = tablinks[i].className.replace(" active", "");
+        document.getElementById(tabName).style.display = "block";
+        evt.currentTarget.className += " active";
+        
+        if (tabName === 'ContractorScheduleTab' && typeof calendar !== 'undefined') {
+             setTimeout(function() { calendar.render(); }, 100);
+        }
+        
+        clearServiceFilters();
+        clearLotFilters();
+        clearPOFilters();
+      }
+
+      function sortTable(th) {
+        var table = th.closest('table');
+        var rows = Array.prototype.slice.call(table.rows);
+        var headerRow = rows.shift(); 
+        var colIndex = Array.prototype.slice.call(th.parentNode.children).indexOf(th);
+        var isAsc = th.dataset.asc === 'true';
+        th.dataset.asc = !isAsc;
+
+        Array.prototype.slice.call(th.parentNode.children).forEach(function(sib) {
+          sib.innerHTML = sib.innerHTML.replace(' ▲', '').replace(' ▼', '');
+        });
+        
+        th.innerHTML = th.innerHTML + (isAsc ? ' ▼' : ' ▲');
+
+        rows.sort(function(a, b) {
+          var valA = a.cells[colIndex].textContent.trim();
+          var valB = b.cells[colIndex].textContent.trim();
+          
+          if (!isNaN(valA) && !isNaN(valB) && valA !== "" && valB !== "") {
+            return isAsc ? Number(valB) - Number(valA) : Number(valA) - Number(valB);
+          }
+          return isAsc ? valB.localeCompare(valA) : valA.localeCompare(valB);
+        });
+
+        rows.forEach(function(row) {
+          table.appendChild(row);
+        });
+      }
+
+      function openReportModal() {
+        document.getElementById("reportModal").style.display = "block";
+        document.getElementById("reportStatusMsg").innerText = "";
+
+        document.getElementById("repProject").innerHTML = document.getElementById("csProject").innerHTML;
+        document.getElementById("repPhase").innerHTML = document.getElementById("csPhase").innerHTML;
+        document.getElementById("repLot").innerHTML = document.getElementById("csLot").innerHTML;
+        document.getElementById("repStatus").innerHTML = document.getElementById("csStatus").innerHTML;
+        
+        document.getElementById("repProject").value = document.getElementById("csProject").value;
+        document.getElementById("repPhase").value = document.getElementById("csPhase").value;
+        document.getElementById("repLot").value = document.getElementById("csLot").value;
+        document.getElementById("repStatus").value = document.getElementById("csStatus").value;
+      }
+      
+      function closeReportModal() { document.getElementById("reportModal").style.display = "none"; }
+      
+      function generateReport() {
+        var filters = {
+          project: document.getElementById("repProject").value,
+          phase: document.getElementById("repPhase").value,
+          lot: document.getElementById("repLot").value,
+          status: document.getElementById("repStatus").value
+        };
+        
+        var checkboxes = document.querySelectorAll("#reportColumnsGroup input[type='checkbox']:checked");
+        var selectedCols = [];
+        for (var i = 0; i < checkboxes.length; i++) {
+          selectedCols.push(checkboxes[i].value.toLowerCase());
+        }
+        
+        if (selectedCols.length === 0) {
+            alert("Please select at least one column for the report."); return;
+        }
+        
+        document.getElementById("reportStatusMsg").style.color = "#4a6b5d";
+        document.getElementById("reportStatusMsg").innerText = "Generating PDF... This may take a minute.";
+        document.getElementById("btnGenerateReport").disabled = true;
+        
+        google.script.run.withSuccessHandler(function(url) {
+            document.getElementById("btnGenerateReport").disabled = false;
+            if (url.indexOf("http") === 0) {
+                document.getElementById("reportStatusMsg").innerHTML = "✅ Success! <a href='" + url + "' target='_blank' style='color:#1c2d42; font-weight:bold;'>Click here to view your report</a>.";
+            } else {
+                document.getElementById("reportStatusMsg").style.color = "#8b3a3a";
+                document.getElementById("reportStatusMsg").innerText = url;
+            }
+        }).generateContractorReportPDF(authenticatedTradeUser, filters, selectedCols);
+      }
+    </script>
+  </body>
+</html>
