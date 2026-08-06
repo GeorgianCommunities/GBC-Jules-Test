@@ -1,5 +1,6 @@
 // --- CONFIG CONSTANTS (Points to your master sheet) ---
 const SHEET_ID = '1rhHn7mXKpjcGY7D1dSQ3K7aWCTFcjYrF_ls7OHmfp4E';
+const SERVICE_MASTER_ID = '1L2-Mbq6Uebqih2qhfhf23A4NRG54aoNR4rQyCEBGCRU';
 const CONTRACTOR_SHEET_NAME = 'Sheet1'; 
 const LOTS_SHEET_NAME = 'Lots'; 
 const PO_SHEET_NAME = 'Purchase Orders'; 
@@ -144,94 +145,144 @@ function getContractorServiceItems(tradeName) {
      };
   }
 
-  // 1. FAST FIND ALL WARRANTY SHEETS CONTAINING TRADE NAME
+  // 1. CHOOSE MATCHING WARRANTY FILES VIA SERVICE_MASTER_ID TO AVOID O(N) DRIVE SCAN
+  var activeLotsMap = {};
   try {
-     var safeTrade = tradeName.replace(/'/g, "\\'").replace(/"/g, '\\"');
-     var files = DriveApp.searchFiles("mimeType = 'application/vnd.google-apps.spreadsheet' and title contains 'Warranty' and trashed = false");
-     
-     while (files.hasNext()) {
-        var file = files.next();
-        var ss = SpreadsheetApp.openById(file.getId());
-        
-        var sheets = ss.getSheets();
-        var sProj = "", sPhase = "", sLot = "";
-        var hasTrade = false;
-        var tempItems = [];
-
-        for (var s = 0; s < sheets.length; s++) {
-          var tabName = sheets[s].getName();
-          
-          if (tabName === "Homeowner Info") {
-            var homeData = sheets[s].getDataRange().getDisplayValues();
-            for (var h = 0; h < homeData.length; h++) {
-               var label = String(homeData[h][0]).trim();
-               if (label === "Project Name:") sProj = String(homeData[h][1]).trim();
-               else if (label === "Phase:") sPhase = String(homeData[h][1]).replace(/^0+(?=\d)/, '').trim();
-               else if (label === "Lot Number:") sLot = String(homeData[h][1]).replace(/^0+(?=\d)/, '').trim();
-            }
-            continue;
-          }
-          if (tabName.toLowerCase().indexOf('schedule') > -1) continue; 
-          
-          var data = sheets[s].getDataRange().getDisplayValues();
-          if (data.length <= 1) continue;
-          
-          var hdrs = data[0].map(function(x){ return String(x).toLowerCase().trim(); });
-          var iTrade = hdrs.indexOf("assigned trade");
-          if (iTrade === -1) continue;
-          
-          var iItem = hdrs.indexOf("item #");
-          var iLoc = hdrs.indexOf("location");
-          var iRoom = hdrs.indexOf("room/area");
-          var iDef = hdrs.indexOf("item/defect area");
-          var iDesc = hdrs.indexOf("description");
-          var iAdd = hdrs.indexOf("additional information") > -1 ? hdrs.indexOf("additional information") : hdrs.indexOf("trade description");
-          var iStat = hdrs.indexOf("status");
-          var iComp = hdrs.indexOf("completion notes");
-          var iSched = hdrs.indexOf("scheduled date");
-          var iPhoto = hdrs.indexOf("photo link");
-          
-          for (var r = 1; r < data.length; r++) {
-             var cellTrade = cleanText(data[r][iTrade]);
-             if (cellTrade !== "" && (cellTrade === cleanTrade || cellTrade.indexOf(cleanTrade) > -1)) { 
-                 hasTrade = true;
-                 var stat = iStat > -1 ? data[r][iStat] : "";
-                 var compNotes = iComp > -1 ? data[r][iComp] : "";
-                 var schedDate = iSched > -1 ? data[r][iSched] : "";
-                 var photo = iPhoto > -1 ? data[r][iPhoto] : ""; 
-                 
-                 if(schedDate instanceof Date) schedDate = schedDate.toLocaleDateString();
-                 var isRej = (stat.toLowerCase() === "assigned" && compNotes.trim() !== "");
-                 
-                 tempItems.push({
-                   formType: tabName,
-                   itemNum: data[r][iItem],
-                   location: (iLoc > -1 ? data[r][iLoc] : "") + " / " + (iRoom > -1 ? data[r][iRoom] : ""),
-                   defectArea: iDef > -1 ? data[r][iDef] : "",
-                   description: iDesc > -1 ? data[r][iDesc] : "",
-                   tradeDesc: iAdd > -1 ? data[r][iAdd] : "",
-                   status: stat,
-                   isRejected: isRej,
-                   completionNotes: compNotes,
-                   scheduledDate: schedDate,
-                   photoLink: photo 
-                 });
-             }
-          }
-        }
-
-        // Apply metadata and push items if the trade was matched anywhere in this spreadsheet
-        if (hasTrade && tempItems.length > 0) {
-            for (var t = 0; t < tempItems.length; t++) {
-                tempItems[t].project = sProj || "Unknown";
-                tempItems[t].phase = sPhase || "";
-                tempItems[t].lot = sLot || "Unknown";
-                items.push(tempItems[t]);
-            }
+     var masterSS = SpreadsheetApp.openById(SERVICE_MASTER_ID);
+     var masterSheet = masterSS.getSheets()[0];
+     var masterData = masterSheet.getDataRange().getDisplayValues();
+     for (var i = 1; i < masterData.length; i++) {
+        var cellTrade = cleanText(masterData[i][11]); // Column 12: Assigned Trade
+        if (cellTrade !== "" && (cellTrade === cleanTrade || cellTrade.indexOf(cleanTrade) > -1)) {
+           var mProj = cleanText(masterData[i][1]); // Column 2: Project Name
+           var mPhase = cleanText(masterData[i][2]).replace(/^0+/, ''); // Column 3: Phase
+           var mLot = cleanText(masterData[i][3]).replace(/^0+/, ''); // Column 4: Lot Number
+           activeLotsMap[mProj + "|" + mPhase + "|" + mLot] = true;
         }
      }
-  } catch(e) {
-     errors.push("Warranty Search Error: " + e.message);
+  } catch (e) {
+     errors.push("Master Sync Fetch Error: " + e.message);
+  }
+
+  // Iterate over Lots and process sheets only for those matching activeLotsMap
+  for (var l = 1; l < lotsData.length; l++) {
+     var lProj = cleanText(lotsData[l][0]);
+     var lPhase = cleanText(lotsData[l][1]).replace(/^0+/, '');
+     var lLot = cleanText(lotsData[l][2]).replace(/^0+/, '');
+     var lotKey = lProj + "|" + lPhase + "|" + lLot;
+     
+     if (activeLotsMap[lotKey]) {
+        var folder = null;
+        var folderUrl = lotsData[l][16]; // Service folder URL (Column Q)
+        if (folderUrl && String(folderUrl).indexOf("http") === 0) {
+           var folderIdMatch = String(folderUrl).match(/[-\w]{25,}/);
+           if (folderIdMatch) {
+              try {
+                 folder = DriveApp.getFolderById(folderIdMatch[0]);
+              } catch (e) {
+                 Logger.log("Folder access error: " + e.message);
+              }
+           }
+        }
+        
+        if (!folder) {
+           try {
+              var rootFolder = DriveApp.getFolderById(WARRANTY_ROOT_FOLDER_ID);
+              var pFolders = rootFolder.searchFolders("title = '" + String(lotsData[l][0]).replace(/'/g, "\\'") + "' and trashed = false");
+              if (pFolders.hasNext()) {
+                  var phFolders = pFolders.next().searchFolders("title = 'Phase " + String(lotsData[l][1]).replace(/'/g, "\\'") + "' and trashed = false");
+                  if (phFolders.hasNext()) {
+                      var lFolders = phFolders.next().searchFolders("title = 'Lot " + String(lotsData[l][2]).replace(/'/g, "\\'") + "' and trashed = false");
+                      if (lFolders.hasNext()) {
+                          folder = lFolders.next();
+                      }
+                  }
+              }
+           } catch (e) {
+              Logger.log("Folder search error: " + e.message);
+           }
+        }
+
+        if (folder) {
+           try {
+              var sheetFiles = folder.searchFiles("mimeType = 'application/vnd.google-apps.spreadsheet' and trashed = false");
+              while (sheetFiles.hasNext()) {
+                 var file = sheetFiles.next();
+                 var ss = SpreadsheetApp.openById(file.getId());
+                 var sheets = ss.getSheets();
+
+                 var sProj = lotsData[l][0];
+                 var sPhase = lotsData[l][1];
+                 var sLot = lotsData[l][2];
+                 var hasTrade = false;
+                 var tempItems = [];
+
+                 for (var s = 0; s < sheets.length; s++) {
+                   var tabName = sheets[s].getName();
+                   if (tabName === "Homeowner Info") continue;
+                   if (tabName.toLowerCase().indexOf('schedule') > -1) continue;
+
+                   var data = sheets[s].getDataRange().getDisplayValues();
+                   if (data.length <= 1) continue;
+
+                   var hdrs = data[0].map(function(x){ return String(x).toLowerCase().trim(); });
+                   var iTrade = hdrs.indexOf("assigned trade");
+                   if (iTrade === -1) continue;
+
+                   var iItem = hdrs.indexOf("item #");
+                   var iLoc = hdrs.indexOf("location");
+                   var iRoom = hdrs.indexOf("room/area");
+                   var iDef = hdrs.indexOf("item/defect area");
+                   var iDesc = hdrs.indexOf("description");
+                   var iAdd = hdrs.indexOf("additional information") > -1 ? hdrs.indexOf("additional information") : hdrs.indexOf("trade description");
+                   var iStat = hdrs.indexOf("status");
+                   var iComp = hdrs.indexOf("completion notes");
+                   var iSched = hdrs.indexOf("scheduled date");
+                   var iPhoto = hdrs.indexOf("photo link");
+
+                   for (var r = 1; r < data.length; r++) {
+                      var cellTrade = cleanText(data[r][iTrade]);
+                      if (cellTrade !== "" && (cellTrade === cleanTrade || cellTrade.indexOf(cleanTrade) > -1)) {
+                          hasTrade = true;
+                          var stat = iStat > -1 ? data[r][iStat] : "";
+                          var compNotes = iComp > -1 ? data[r][iComp] : "";
+                          var schedDate = iSched > -1 ? data[r][iSched] : "";
+                          var photo = iPhoto > -1 ? data[r][iPhoto] : "";
+
+                          if(schedDate instanceof Date) schedDate = schedDate.toLocaleDateString();
+                          var isRej = (stat.toLowerCase() === "assigned" && compNotes.trim() !== "");
+
+                          tempItems.push({
+                            formType: tabName,
+                            itemNum: data[r][iItem],
+                            location: (iLoc > -1 ? data[r][iLoc] : "") + " / " + (iRoom > -1 ? data[r][iRoom] : ""),
+                            defectArea: iDef > -1 ? data[r][iDef] : "",
+                            description: iDesc > -1 ? data[r][iDesc] : "",
+                            tradeDesc: iAdd > -1 ? data[r][iAdd] : "",
+                            status: stat,
+                            isRejected: isRej,
+                            completionNotes: compNotes,
+                            scheduledDate: schedDate,
+                            photoLink: photo
+                          });
+                      }
+                   }
+                 }
+
+                 if (hasTrade && tempItems.length > 0) {
+                     for (var t = 0; t < tempItems.length; t++) {
+                         tempItems[t].project = sProj || "Unknown";
+                         tempItems[t].phase = sPhase || "";
+                         tempItems[t].lot = sLot || "Unknown";
+                         items.push(tempItems[t]);
+                     }
+                 }
+              }
+           } catch (e) {
+              errors.push("Warranty Search Error on Lot " + lLot + ": " + e.message);
+           }
+        }
+     }
   }
 
   // 2. COMPILE COMBINED ACCESS LIST & CHECK SCHEDULES
