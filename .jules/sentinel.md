@@ -1,0 +1,6 @@
+# Sentinel's Journal - Critical Security Learnings
+
+## 2026-08-06 - [Stored XSS Prevention in Google Sheets Frontend Portals]
+**Vulnerability:** Google Apps Script frontends constructed via templates and `HtmlService` often load data from Google Sheets databases and render it dynamically into DOM trees via `.innerHTML`. Because sheet cells are filled with unvalidated, user-controlled inputs (descriptions, defect areas, locations, completion notes, etc.), any malicious HTML tags (e.g. `<script>` or event handlers like `<img src=x onerror=...>`) are evaluated in the browser of other administrative or contractor portal users, resulting in Stored Cross-Site Scripting (XSS).
+**Learning:** Google Apps Script does not provide automatic HTML sanitization for templates when variables are inserted using client-side JS and `.innerHTML`. To fail securely and uphold defense-in-depth, all frontend templates must utilize a robust `escapeHtml()` utility to sanitize user-controlled dynamic text prior to DOM insertion.
+**Prevention:** Always implement and apply an `escapeHtml()` helper function for all variable concatenations into DOM manipulation APIs like `.innerHTML`, while keeping static template markup intact.

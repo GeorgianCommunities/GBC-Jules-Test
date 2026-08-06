@@ -647,6 +647,18 @@
     </div>
 
     <script>
+      function escapeHtml(text) {
+        if (text === null || text === undefined) return '';
+        var map = {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#039;'
+        };
+        return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
+      }
+
       var currentUser = null; 
       var globalLotMap = {}; var globalTradeMap = {}; var globalLotOptionsMap = {}; var globalLotHierarchy = {}; 
       var globalCostCodes = []; 
@@ -940,9 +952,9 @@
             var safeLabel = String(headers[j]).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
             
             if (i === 0) {
-              html += "<th class='sort-header' onclick=\"sortTable('hoTable', " + j + ")\">" + data[i][j] + "</th>";
+              html += "<th class='sort-header' onclick=\"sortTable('hoTable', " + j + ")\">" + escapeHtml(data[i][j]) + "</th>";
             } else {
-              html += "<td data-label='" + safeLabel + "'>" + data[i][j] + "</td>";
+              html += "<td data-label='" + safeLabel + "'>" + escapeHtml(data[i][j]) + "</td>";
             }
           }
           if (i === 0) {
@@ -1121,10 +1133,10 @@
           for (var j = 0; j < data[i].length; j++) { 
             if (j === 6 || skipColIndices.indexOf(j) > -1) continue; 
             if (i === 0) {
-              html += "<th class='sort-header' onclick=\"sortTable('contractorTable', " + j + ")\">" + data[i][j] + "</th>"; 
+              html += "<th class='sort-header' onclick=\"sortTable('contractorTable', " + j + ")\">" + escapeHtml(data[i][j]) + "</th>";
             } else {
               var safeLabel = String(headers[j]).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
-              html += "<td data-label='" + safeLabel + "'>" + data[i][j] + "</td>"; 
+              html += "<td data-label='" + safeLabel + "'>" + escapeHtml(data[i][j]) + "</td>";
             }
           }
           if (i === 0) {
@@ -1450,9 +1462,9 @@
           for (var j = 0; j < data[i].length; j++) {
             if (skipColIndices.indexOf(j) > -1) continue; 
             var cellValue = data[i][j] ? data[i][j].toString() : ""; 
-            if (i === 0) html += "<th class='sort-header' onclick=\"sortTable('poTable', " + j + ")\">" + cellValue + "</th>"; 
-            else if(j === 6 && cellValue.indexOf("http") === 0) html += "<td><a href='" + cellValue + "' target='_blank' class='btn-folder'>View PDF</a></td>"; 
-            else html += "<td>" + cellValue + "</td>"; 
+            if (i === 0) html += "<th class='sort-header' onclick=\"sortTable('poTable', " + j + ")\">" + escapeHtml(cellValue) + "</th>";
+            else if(j === 6 && cellValue.indexOf("http") === 0) html += "<td><a href='" + escapeHtml(cellValue) + "' target='_blank' class='btn-folder'>View PDF</a></td>";
+            else html += "<td>" + escapeHtml(cellValue) + "</td>";
           }
           if (i === 0) html += "<th>Manage</th>"; 
           else html += "<td><button class='btn-folder' onclick=\"openManageModal('" + data[i][2] + "')\">Manage</button></td>";
@@ -1569,31 +1581,32 @@
             
             if (i === 0) {
               var headerTxt = (j === 16 ? "Service Folder" : cellValue);
-              html += "<th class='sort-header' onclick=\"sortTable('serviceTable', " + j + ")\">" + headerTxt + "</th>"; 
+              html += "<th class='sort-header' onclick=\"sortTable('serviceTable', " + j + ")\">" + escapeHtml(headerTxt) + "</th>";
             } else {
               
               if (headerName === "status" && cellValue !== "") {
                 var badgeClass = "status-unreviewed";
+                var safeVal = escapeHtml(cellValue);
                 if (cellValue === "Reviewed") badgeClass = "status-reviewed";
                 if (cellValue === "Assigned") badgeClass = "status-assigned";
                 if (cellValue === "Completed") badgeClass = "status-completed";
                 if (cellValue === "Approved") badgeClass = "status-approved";
-                html += "<td><span class='status-badge " + badgeClass + "'>" + cellValue + "</span></td>";
+                html += "<td><span class='status-badge " + badgeClass + "'>" + safeVal + "</span></td>";
               } 
               else if (j === 13 && cellValue !== "") {
                 var dateLines = cellValue.split(/\n+/);
-                var displayDate = "<span style='font-weight:bold; color:#1c2d42;'>" + dateLines[0] + "</span>";
+                var displayDate = "<span style='font-weight:bold; color:#1c2d42;'>" + escapeHtml(dateLines[0]) + "</span>";
                 for (var d = 1; d < dateLines.length; d++) {
-                  displayDate += "<br><span style='color:#e74c3c; font-size:11px; font-weight:bold;'>" + dateLines[d] + "</span>";
+                  displayDate += "<br><span style='color:#e74c3c; font-size:11px; font-weight:bold;'>" + escapeHtml(dateLines[d]) + "</span>";
                 }
                 html += "<td>" + displayDate + "</td>";
               }
               else if (j === 16 && cellValue.indexOf("http") === 0) {
-                html += "<td><a href='" + cellValue + "' target='_blank' class='btn-folder' style='background-color:#c6a87c; color:#1c2d42;'>Service Folder</a></td>";
+                html += "<td><a href='" + escapeHtml(cellValue) + "' target='_blank' class='btn-folder' style='background-color:#c6a87c; color:#1c2d42;'>Service Folder</a></td>";
               } else if (cellValue.indexOf("http") === 0) {
-                html += "<td><a href='" + cellValue + "' target='_blank' class='btn-folder'>View Docs</a></td>";
+                html += "<td><a href='" + escapeHtml(cellValue) + "' target='_blank' class='btn-folder'>View Docs</a></td>";
               } else {
-                html += "<td>" + cellValue + "</td>"; 
+                html += "<td>" + escapeHtml(cellValue) + "</td>";
               }
             }
           }
@@ -2007,22 +2020,23 @@
             var headerName = String(headers[j]).toLowerCase().trim();
             
             if (i === 0) {
-              html += "<th class='sort-header' onclick=\"sortTable('serviceOrdersTable', " + j + ")\">" + cellValue + "</th>"; 
+              html += "<th class='sort-header' onclick=\"sortTable('serviceOrdersTable', " + j + ")\">" + escapeHtml(cellValue) + "</th>";
             } else {
               
               if (headerName === "status" && cellValue !== "") {
                 var badgeClass = "status-unreviewed";
+                var safeVal = escapeHtml(cellValue);
                 if (cellValue === "Reviewed") badgeClass = "status-reviewed";
                 if (cellValue === "Assigned") badgeClass = "status-assigned";
                 if (cellValue === "Completed") badgeClass = "status-completed";
                 if (cellValue === "Approved") badgeClass = "status-approved";
-                html += "<td><span class='status-badge " + badgeClass + "'>" + cellValue + "</span></td>";
+                html += "<td><span class='status-badge " + badgeClass + "'>" + safeVal + "</span></td>";
               } 
               else if (j === 13 && cellValue !== "") {
                 var dateLines = cellValue.split(/\n+/);
-                var displayDate = "<span style='font-weight:bold; color:#1c2d42;'>" + dateLines[0] + "</span>";
+                var displayDate = "<span style='font-weight:bold; color:#1c2d42;'>" + escapeHtml(dateLines[0]) + "</span>";
                 for (var d = 1; d < dateLines.length; d++) {
-                  displayDate += "<br><span style='color:#e74c3c; font-size:11px; font-weight:bold;'>" + dateLines[d] + "</span>";
+                  displayDate += "<br><span style='color:#e74c3c; font-size:11px; font-weight:bold;'>" + escapeHtml(dateLines[d]) + "</span>";
                 }
                 html += "<td>" + displayDate + "</td>";
               }
@@ -2033,14 +2047,14 @@
                 for (var l = 0; l < links.length; l++) {
                   var cleanLink = links[l].replace("Contractor Photo: ", "").trim();
                   if (cleanLink.indexOf("http") === 0) {
-                    btnHtml += "<a href='" + cleanLink + "' target='_blank' class='btn-folder' style='margin-bottom:4px; display:inline-block;'>View Photo " + pCount + "</a><br>";
+                    btnHtml += "<a href='" + escapeHtml(cleanLink) + "' target='_blank' class='btn-folder' style='margin-bottom:4px; display:inline-block;'>View Photo " + pCount + "</a><br>";
                     pCount++;
                   }
                 }
-                if(btnHtml === "") btnHtml = cellValue; 
+                if(btnHtml === "") btnHtml = escapeHtml(cellValue);
                 html += "<td>" + btnHtml + "</td>";
               } else {
-                html += "<td>" + cellValue + "</td>"; 
+                html += "<td>" + escapeHtml(cellValue) + "</td>";
               }
             }
           }
