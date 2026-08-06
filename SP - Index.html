@@ -1,0 +1,2332 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <!-- FULLCALENDAR LIBRARY -->
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 20px; background-color: #f8f9fc; color: #333; }
+      .tab { display: flex; flex-wrap: wrap; border: 1px solid #dcdcdc; background-color: #2c3e50; border-radius: 5px 5px 0 0; }
+      .tab button { background-color: inherit; color: white; flex: 1 1 auto; border: none; outline: none; cursor: pointer; padding: 14px 10px; font-size: 14px; text-align: center; font-weight: bold; transition: 0.2s;}
+      .tab button:hover { background-color: #3b536b; color: white; }
+      .tab button.active { background-color: #c6a87c; color: #1c2d42; }
+      .tabcontent { display: none; padding: 20px; border: 1px solid #dcdcdc; border-top: none; background: white; border-radius: 0 0 5px 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+      .form-container { background: #f0f3f5; padding: 15px; margin-bottom: 20px; border-radius: 5px; border: 1px solid #e1e5e8; }
+      .filter-container { background: #e6ecef; padding: 15px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #d1d8dc; }
+      .form-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;}
+      .form-row input[type="text"], .form-row input[type="email"], .form-row input[type="number"], .form-row input[type="date"], .form-row input[type="password"], .form-row select, .form-row textarea { flex: 1; padding: 8px; min-width: 120px; border: 1px solid #ccc; border-radius: 3px; font-family: inherit;}
+      .btn-submit { background-color: #4a6b5d; color: white; padding: 10px 15px; border: none; cursor: pointer; border-radius: 3px; transition: 0.2s; font-weight: bold; }
+      .btn-submit:hover { background-color: #385247; }
+      .btn-filter { background-color: #1c2d42; color: white; padding: 8px 15px; border: none; cursor: pointer; border-radius: 3px; font-weight: bold; }
+      .btn-filter:hover { background-color: #111d2b; }
+      .btn-clear { background-color: #7f8c8d; color: white; padding: 8px 15px; border: none; cursor: pointer; border-radius: 3px; }
+      .btn-folder { background-color: #647b8c; color: white; padding: 6px 12px; text-decoration: none; border-radius: 3px; font-size: 13px; display: inline-block; cursor: pointer; transition: 0.2s; border: none; }
+      .btn-delete { background-color: #8b3a3a; color: white; padding: 5px 10px; border: none; cursor: pointer; border-radius: 3px; }
+      table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; background: white; min-width: 700px; }
+      th, td { border: 1px solid #e0e0e0; padding: 10px 8px; text-align: left; vertical-align: middle; }
+      th { background-color: #1c2d42; color: white; font-weight: 600; }
+      tr:nth-child(even) { background-color: #fcfcfc; }
+      
+      .sort-header { cursor: pointer; user-select: none; transition: 0.2s; }
+      .sort-header:hover { background-color: #3b536b; }
+
+      .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(28, 45, 66, 0.6); }
+      .modal-content { background-color: #fcfcfc; margin: 5% auto; padding: 25px; border: none; width: 90%; max-width: 500px; border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto;}
+      .close { color: #888; float: right; font-size: 28px; font-weight: bold; cursor: pointer; margin-top:-10px;}
+      .close:hover, .close:focus { color: #1c2d42; text-decoration: none; }
+      
+      .settings-btn { position: absolute; top: 20px; right: 20px; background-color: #1c2d42; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; display: none; z-index: 100; }
+      .settings-btn:hover { background-color: #3b536b; }
+
+      .checkbox-group { border: 1px solid #ccc; border-radius: 3px; padding: 8px; background: white; max-height: 120px; overflow-y: auto; font-size: 13px; line-height: 1.8; }
+      .checkbox-group label { display: block; cursor: pointer; margin-bottom: 3px; }
+      .checkbox-group input { margin-right: 8px; }
+      
+      #tableContainer, #serviceTableContainer, #poTableContainer, #serviceOrdersTableContainer, #hoTableContainer { overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
+      
+      .radio-container { margin-bottom: 15px; font-size: 14px; font-weight: bold; color: #1c2d42; }
+      .radio-container label { margin-right: 15px; cursor: pointer; }
+      .help-text { font-size: 11px; color: #666; font-style: italic; display: block; margin-top: 5px; }
+
+      .status-badge { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; display: inline-block; letter-spacing: 0.5px; text-align: center; }
+      .status-unreviewed { background-color: #e2e3e5; color: #383d41; }
+      .status-reviewed { background-color: #f39c12; color: white; }
+      .status-assigned { background-color: #3498db; color: white; }
+      .status-completed { background-color: #e74c3c; color: white; }
+      .status-approved { background-color: #2ecc71; color: white; }
+
+      /* AI CHAT WIDGET STYLES */
+      .ai-chat-launcher { position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px; background-color: #c6a87c; color: #1c2d42; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 10000; transition: transform 0.2s; }
+      .ai-chat-launcher:hover { transform: scale(1.05); background-color: #bfa073; }
+      
+      .ai-chat-window { position: fixed; bottom: 95px; right: 25px; width: 360px; height: 480px; background: white; border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,0.25); display: none; flex-direction: column; z-index: 10000; overflow: hidden; border: 1px solid #dcdcdc; }
+      .ai-chat-header { background-color: #1c2d42; color: white; padding: 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+      .ai-chat-close { cursor: pointer; font-size: 20px; font-weight: bold; line-height: 1; }
+      .ai-chat-close:hover { color: #c6a87c; }
+      
+      .ai-chat-messages { flex: 1; padding: 15px; overflow-y: auto; background-color: #f8f9fc; display: flex; flex-direction: column; gap: 10px; font-size: 13px; }
+      .ai-msg { padding: 10px 12px; border-radius: 8px; max-width: 85%; line-height: 1.4; word-break: break-word; }
+      .ai-msg-user { background-color: #4a6b5d; color: white; align-self: flex-end; border-bottom-right-radius: 0; }
+      .ai-msg-bot { background-color: #e6ecef; color: #333; align-self: flex-start; border-bottom-left-radius: 0; border: 1px solid #d1d8dc; white-space: pre-wrap; }
+      .ai-msg-system { background-color: #f2dede; color: #a94442; align-self: center; text-align: center; font-size: 11px; max-width: 95%; border: 1px solid #ebccd1; }
+      
+      .ai-chat-footer { padding: 10px; background: white; border-top: 1px solid #eee; display: flex; gap: 8px; }
+      .ai-chat-footer input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; outline: none; font-size: 13px; }
+      .ai-chat-footer button { background-color: #1c2d42; color: white; border: none; padding: 0 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; }
+      .ai-chat-footer button:hover { background-color: #111d2b; }
+
+      /* CALENDAR CSS */
+      #calendar { max-width: 1100px; margin: 0 auto; background: white; padding: 15px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+      .fc-event { cursor: pointer; }
+
+      @media (max-width: 480px) {
+        .ai-chat-window { width: calc(100% - 40px); right: 20px; left: 20px; bottom: 90px; height: 400px; }
+        .settings-btn { top: 10px; right: 10px; font-size: 12px; }
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Georgian Build Connect - Service Portal</h2>
+    <button id="userSettingsBtn" class="settings-btn" onclick="openUserSettingsModal()">⚙️ Settings</button>
+    <button id="refreshBtn" class="settings-btn" style="right: 130px;" onclick="refreshAppData()">🔄 Refresh</button>
+
+    <!-- LOGIN WALL -->
+    <div id="loginWall">
+      <div class="form-container" style="max-width: 400px; margin: 100px auto; text-align: center;">
+        <h3 style="margin-top:0;">Welcome to the Service Portal</h3>
+        <p style="font-size:13px; color:#666;">Please log in to access the portal.</p>
+        <form onsubmit="handleLogin(event)">
+          <input type="email" id="loginEmail" placeholder="Email Address" required style="width: 100%; margin-bottom: 10px; padding: 10px; box-sizing: border-box;">
+          <input type="password" id="loginPassword" placeholder="Password" required style="width: 100%; margin-bottom: 15px; padding: 10px; box-sizing: border-box;">
+          <button type="submit" class="btn-submit" style="width: 100%; padding: 12px; font-size:16px;">Login</button>
+          <span id="loginError" style="color: #8b3a3a; display: block; margin-top: 15px; font-weight: bold; font-size:13px;"></span>
+        </form>
+      </div>
+    </div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div id="mainApp" style="display: none;">
+      <div class="tab">
+        <button class="tablinks active" onclick="openTab(event, 'Service_Directory')">Service Requests</button>
+        <button class="tablinks" onclick="openTab(event, 'Service_Orders')">Service Orders</button>
+        <button class="tablinks" onclick="openTab(event, 'Service_Schedule')">Schedule</button>
+        <button class="tablinks" onclick="openTab(event, 'Directory')">Contractors</button>
+        <button class="tablinks" onclick="openTab(event, 'PO_Directory')">Purchase Orders</button>
+        <button class="tablinks" onclick="openTab(event, 'Homeowner_Directory')">Homeowners</button>
+      </div>
+
+      <!-- HOMEOWNER TAB CONTENT -->
+      <div id="Homeowner_Directory" class="tabcontent" style="display:none;">
+        <div class="form-container">
+          <h4>Add New Homeowner</h4>
+          <form id="homeownerForm" onsubmit="submitHomeownerForm(event)">
+            <div class="form-row">
+              <input type="text" id="hoFirstName" placeholder="First Name" required>
+              <input type="text" id="hoLastName" placeholder="Last Name" required>
+            </div>
+            <div class="form-row">
+              <input type="email" id="hoEmail" placeholder="Email Address" required>
+              <input type="text" id="hoPhone" placeholder="Phone Number" required>
+            </div>
+            <div class="form-row">
+              <select id="hoProject" onchange="updateHoPhaseDropdown()" required><option value="" disabled selected>Loading Projects...</option></select>
+              <select id="hoPhase" onchange="updateHoLotDropdown()" required><option value="" disabled selected>Select Project First</option></select>
+              <select id="hoLot" required><option value="" disabled selected>Select Phase First</option></select>
+            </div>
+            <button type="submit" class="btn-submit">Save Homeowner credentials</button>
+            <span id="hoStatusMsg" style="color: #4a6b5d; margin-left: 10px; font-weight:bold;"></span>
+          </form>
+        </div>
+
+        <h3>Homeowner Directory</h3>
+        <div class="filter-container form-row">
+          <input type="text" id="filterHoName" placeholder="Search by Name" oninput="applyHoFilters()">
+          <input type="text" id="filterHoEmail" placeholder="Search by Email" oninput="applyHoFilters()">
+          <select id="filterHoProject" onchange="applyHoFilters()"><option value="">All Projects</option></select>
+          <button type="button" class="btn-clear" onclick="clearHoFilters()">Clear</button>
+        </div>
+        <div id="hoTableContainer">Loading data...</div>
+      </div>
+
+      <!-- SCHEDULE TAB CONTENT -->
+      <div id="Service_Schedule" class="tabcontent">
+        <h3>Service Schedule</h3>
+        
+        <!-- NEW DYNAMIC CALENDAR FILTERS -->
+        <div class="filter-container form-row">
+          <select id="calFilterProject" onchange="updateCalendarFilters('calFilterProject')"><option value="">All Projects</option></select>
+          <select id="calFilterPhase" onchange="updateCalendarFilters('calFilterPhase')"><option value="">All Phases</option></select>
+          <select id="calFilterLot" onchange="updateCalendarFilters('calFilterLot')"><option value="">All Lots</option></select>
+          <select id="calFilterTrade" onchange="updateCalendarFilters('calFilterTrade')"><option value="">All Trades</option></select>
+          <select id="calFilterStatus" onchange="updateCalendarFilters('calFilterStatus')"><option value="">All Statuses</option></select>
+          <button type="button" class="btn-clear" onclick="clearCalendarFilters()">Clear</button>
+        </div>
+
+        <div style="margin-bottom: 15px;">
+           <strong>Project Legend: </strong>
+           <span id="scheduleLegend"><i>Loading...</i></span>
+        </div>
+        <div id="calendar"></div>
+      </div>
+
+      <!-- SERVICE REQUESTS TAB -->
+      <div id="Service_Directory" class="tabcontent" style="display:block;">
+        <h3>Service Requests & Documents</h3>
+        
+        <div class="form-container">
+          <h4>Upload Warranty Document</h4>
+          <form id="warrantyUploadForm" onsubmit="handleWarrantyUpload(event)">
+            <div class="form-row">
+              <input type="text" id="warrantyCaseId" placeholder="Case ID #" style="flex: 1; min-width: 100px;">
+              <input type="file" id="warrantyFile" accept="application/pdf,image/*,.rtf,application/rtf" required style="flex: 2;">
+              <button type="submit" class="btn-submit" id="uploadBtn">Upload & Process</button>
+            </div>
+            <span id="uploadStatusMsg" style="color: #4a6b5d; font-weight:bold; font-size: 13px;"></span>
+          </form>
+        </div>
+        
+        <div class="form-container">
+          <h4>Upload Service Photo(s)</h4>
+          <form id="photoUploadForm" onsubmit="handlePhotoUpload(event)">
+            <div class="form-row">
+              <select id="photoProjectSelect" required onchange="filterPhotoLots()">
+                <option value="" disabled selected>Loading Projects...</option>
+              </select>
+              <select id="photoLotSelect" required onchange="fetchLotWarrantyMetadata()">
+                <option value="" disabled selected>Select a Project First</option>
+              </select>
+              <select id="photoFormType" required onchange="updateItemDropdown()">
+                <option value="" disabled selected>Select Form Type First</option>
+              </select>
+            </div>
+
+            <hr style="border:0; border-top:1px solid #ccc; margin: 15px 0;">
+
+            <div class="radio-container">
+              <label><input type="radio" name="uploadMode" value="manual" checked onchange="togglePhotoUploadMode()"> Manual Assignment (Row by Row)</label>
+              <label><input type="radio" name="uploadMode" value="auto" onchange="togglePhotoUploadMode()"> Auto-Map by File Name</label>
+            </div>
+
+            <div id="manualPhotoContainer">
+              <div id="manualPhotoRows">
+                <div class="form-row manual-photo-row">
+                  <select class="photo-item-select" style="flex: 1; max-width: 200px;">
+                    <option value="" disabled selected>Select Item #</option>
+                  </select>
+                  <input type="file" class="photo-file-input" accept="image/*" multiple style="flex: 2;" title="Hold Ctrl/Cmd to select multiple images">
+                </div>
+              </div>
+              <button type="button" class="btn-folder" style="background-color: #6c757d; margin-top:5px;" onclick="addPhotoRow()">+ Add Another Item</button>
+            </div>
+
+            <div id="autoPhotoContainer" style="display:none; background: #e2e3e5; padding: 15px; border-radius: 4px;">
+              <label style="font-weight:bold; font-size: 14px;">Select All Photos</label>
+              <input type="file" id="autoPhotoFiles" accept="image/*" multiple style="width:100%; margin-top:5px; padding:10px; background:white; border:1px solid #ccc;">
+              <span class="help-text">Name your files with the exact Item Number (e.g., 'item3.jpg' or '12-roof.png').</span>
+            </div>
+
+            <button type="submit" class="btn-submit" id="photoUploadBtn" style="margin-top: 15px;">Upload & Process Photo(s)</button>
+            <span id="photoStatusMsg" style="color: #4a6b5d; font-weight:bold; font-size: 13px; display:block; margin-top:10px;"></span>
+          </form>
+        </div>
+
+        <!-- NEW MANUAL WARRANTY ITEM ENTRY SECTION -->
+        <div class="form-container">
+          <h4>Manual Warranty Item Entry</h4>
+          <form id="manualEntryForm" onsubmit="handleManualEntry(event, 'serviceStatusMsg', 'manualEntryForm')">
+            <div class="form-row">
+              <select id="mwProject" onchange="updateMwPhaseDropdown()" required><option value="" disabled selected>Loading Projects...</option></select>
+              <select id="mwPhase" onchange="updateMwLotDropdown()" required><option value="" disabled selected>Select Project First</option></select>
+              <select id="mwLot" required><option value="" disabled selected>Select Phase First</option></select>
+            </div>
+            <div class="form-row">
+              <input type="text" id="mwFormType" placeholder="Service Form (e.g., 30-Day Form)" required>
+              <input type="text" id="mwLocation" placeholder="Location" required>
+              <input type="text" id="mwRoomArea" placeholder="Room/Area" required>
+            </div>
+            <div class="form-row">
+              <input type="text" id="mwDefectArea" placeholder="Item/Defect Area" required>
+            </div>
+            <div class="form-row">
+              <textarea id="mwDescription" placeholder="Description" rows="3" required></textarea>
+            </div>
+            <div class="form-row">
+              <label style="font-size:12px; font-weight:bold; width:100%;">Attach Photos (Optional)</label>
+              <input type="file" id="mwPhotos" accept="image/*" multiple style="width:100%; border:1px solid #ccc; padding:5px; background:white; border-radius:3px;">
+            </div>
+            <button type="submit" class="btn-submit" id="mwSubmitBtn">Submit Manual Entry</button>
+            <span id="serviceStatusMsg" style="color: #4a6b5d; font-weight:bold; font-size: 13px; display:block; margin-top:10px;"></span>
+          </form>
+        </div>
+
+        <div class="filter-container form-row">
+          <select id="filterServiceProject"><option value="">All Projects</option></select>
+          <select id="filterServiceLot"><option value="">All Lots</option></select>
+          <button type="button" class="btn-filter" onclick="applyServiceFilters()">Apply Filters</button>
+          <button type="button" class="btn-clear" onclick="clearServiceFilters()">Clear</button>
+        </div>
+        <div id="serviceTableContainer">Loading data...</div>
+      </div>
+
+      <!-- SERVICE ORDERS TAB -->
+      <div id="Service_Orders" class="tabcontent">
+        <h3>Service Orders Master Viewer</h3>
+        
+        <div class="filter-container form-row">
+          <select id="soProject" onchange="updateServiceOrderDropdowns('soProject')"><option value="">All Projects</option></select>
+          <select id="soPhase" onchange="updateServiceOrderDropdowns('soPhase')"><option value="">All Phases</option></select>
+          <select id="soLot" onchange="updateServiceOrderDropdowns('soLot')"><option value="">All Lots</option></select>
+          <select id="soForm" onchange="updateServiceOrderDropdowns('soForm')"><option value="">All Forms</option></select>
+          <input type="text" id="soItem" placeholder="Item # (Optional)">
+          <select id="soTrade"><option value="">All Trades</option></select>
+          <select id="soStatus"><option value="">All Statuses</option></select>
+          
+          <button type="button" class="btn-filter" style="background-color: #c6a87c; color:#1c2d42;" onclick="searchServiceOrders()">Search</button>
+          <button type="button" class="btn-clear" onclick="clearServiceOrderFilters()">Clear</button>
+        </div>
+        
+        <div style="width: 100%; display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 15px;">
+          <button type="button" class="btn-filter" style="background-color: #647b8c;" onclick="openReportModal()">🖨️ Print Report</button>
+          <button type="button" class="btn-submit" id="btnSync" onclick="triggerMasterSync()">Sync Database</button>
+        </div>
+
+        <div id="serviceOrdersTableContainer" style="padding: 20px; text-align: center; color: #666; font-style: italic; background: white; border: 1px solid #e0e0e0; border-radius: 3px;">
+          Please select your filters and click Search to populate the service items.
+        </div>
+      </div>
+
+      <!-- CONTRACTORS TAB -->
+      <div id="Directory" class="tabcontent">
+        <div class="form-container">
+          <h4>Add New Contractor</h4>
+          <form id="contractorForm" onsubmit="submitForm(event)">
+            <div class="form-row">
+              <input type="text" id="bizName" placeholder="Business Name" required>
+              <input type="text" id="contact" placeholder="Main Contact" required>
+            </div>
+            <div class="form-row">
+              <input type="text" id="email" placeholder="Email">
+              <input type="text" id="phone" placeholder="Phone">
+              <select id="tradeType" required><option value="" disabled selected>Loading Trade Types...</option></select>
+            </div>
+            <div class="form-row">
+              <textarea id="address" placeholder="Address"></textarea>
+              <select id="costCodes" multiple required style="flex: 1;"><option value="" disabled>Loading Cost Codes...</option></select>
+            </div>
+            <button type="submit" class="btn-submit">Save to Directory</button>
+            <span id="statusMsg" style="color: #4a6b5d; margin-left: 10px; font-weight:bold;"></span>
+          </form>
+        </div>
+        <h3>Contractor Directory</h3>
+        <div id="tableContainer">Loading data...</div>
+      </div>
+
+      <!-- PURCHASE ORDERS TAB -->
+      <div id="PO_Directory" class="tabcontent">
+        <div class="form-container">
+          <h4>Generate Manual Purchase Order</h4>
+          <form id="poForm" onsubmit="submitPOForm(event)">
+            <div class="form-row">
+              <select id="poProjectSelect" required onchange="filterPOLotsAndTrades()"><option value="" disabled selected>Loading Projects...</option></select>
+              <select id="poLotSelect" required><option value="" disabled>Select a Project First</option></select>
+              <select id="poTradeSelect" required><option value="" disabled>Select a Project First</option></select>
+              <select id="poInitialStatus" required>
+                <option value="Open" selected>Issue as Open</option>
+                <option value="Pending">Issue as Pending</option>
+              </select>
+            </div>
+            
+            <div id="manualItemsContainer" style="background: #e2e3e5; padding: 10px; border-radius: 3px; margin-bottom: 10px;">
+              <h5 style="margin-top: 0; margin-bottom: 10px;">Manual Items & Costs</h5>
+              <div id="manualItemsList">
+                <div class="form-row manual-item-row">
+                  <input type="text" class="manual-desc" placeholder="Item Description">
+                  <input type="number" class="manual-cost" placeholder="Cost ($)" step="0.01" min="0">
+                </div>
+              </div>
+              <button type="button" class="btn-folder" style="background-color: #6c757d;" onclick="addManualItemRow()">+ Add Item</button>
+            </div>
+
+            <div class="form-row"><textarea id="poScope" placeholder="Scope of Work (Optional)" rows="2"></textarea></div>
+            <div class="form-row"><textarea id="poComments" placeholder="Additional Comments (Optional)" rows="2"></textarea></div>
+            <button type="submit" class="btn-submit">Generate PO</button>
+            <span id="poStatusMsg" style="color: #4a6b5d; margin-left: 10px; font-weight:bold;"></span>
+          </form>
+        </div>
+
+        <h3>Purchase Order Directory</h3>
+        <div class="filter-container form-row">
+          <select id="filterPOProject"><option value="">All Projects</option></select>
+          <select id="filterPOTrade"><option value="">All Trades</option></select>
+          <select id="filterPOStatus"><option value="">All Statuses</option></select>
+          <button type="button" class="btn-filter" onclick="applyPOFilters()">Apply Filters</button>
+          <button type="button" class="btn-clear" onclick="clearPOFilters()">Clear</button>
+        </div>
+        <div id="poTableContainer">Loading data...</div>
+      </div>
+    </div> <!-- END MAIN APP -->
+
+    <!-- MODALS -->
+    
+    <!-- EDIT HOMEOWNER MODAL -->
+    <div id="editHomeownerModal" class="modal">
+      <div class="modal-content" style="max-width: 600px;">
+        <span class="close" onclick="closeEditHoModal()">&times;</span>
+        <h3 style="margin-top:0;">Edit Homeowner</h3>
+        <hr style="border:0; border-top:1px solid #eee; margin-bottom:15px;">
+        <form id="editHomeownerForm" onsubmit="submitEditHoForm(event)">
+          <input type="hidden" id="editHoOrigEmail">
+          <input type="hidden" id="editHoOrigProject">
+          <input type="hidden" id="editHoOrigPhase">
+          <input type="hidden" id="editHoOrigLot">
+          <div class="form-row">
+            <input type="text" id="editHoFirstName" placeholder="First Name" required>
+            <input type="text" id="editHoLastName" placeholder="Last Name" required>
+          </div>
+          <div class="form-row">
+            <input type="email" id="editHoEmail" placeholder="Email Address" required>
+            <input type="text" id="editHoPhone" placeholder="Phone Number" required>
+          </div>
+          <div class="form-row">
+            <select id="editHoProject" onchange="updateEditHoPhaseDropdown()" required><option value="" disabled selected>Loading Projects...</option></select>
+            <select id="editHoPhase" onchange="updateEditHoLotDropdown()" required><option value="" disabled selected>Select Phase</option></select>
+            <select id="editHoLot" required><option value="" disabled selected>Select Lot</option></select>
+          </div>
+          <button type="submit" class="btn-submit" style="width:100%;">Save Changes</button>
+          <span id="editHoStatusMsg" style="color: #4a6b5d; margin-top: 10px; font-weight:bold; display:block; text-align:center;"></span>
+        </form>
+      </div>
+    </div>
+
+    <!-- PRINT REPORT MODAL -->
+    <div id="reportModal" class="modal">
+      <div class="modal-content" style="max-width: 600px;">
+        <span class="close" onclick="closeReportModal()">x</span>
+        <h3 style="margin-top:0;">Generate Service Report</h3>
+        
+        <h4 style="margin-bottom:5px;">1. Report Filters</h4>
+        <span class="help-text" style="margin-bottom:10px;">These mirror your current table filters.</span>
+        <div class="form-row">
+          <select id="repProject"><option value="">All Projects</option></select>
+          <select id="repPhase"><option value="">All Phases</option></select>
+          <select id="repLot"><option value="">All Lots</option></select>
+        </div>
+        <div class="form-row">
+          <select id="repTrade"><option value="">All Trades</option></select>
+          <select id="repStatus"><option value="">All Statuses</option></select>
+        </div>
+        
+        <h4 style="margin-top:20px; margin-bottom:5px;">2. Columns to Include</h4>
+        <div class="checkbox-group" id="reportColumnsGroup" style="max-height: 250px;">
+            <label><input type="checkbox" value="Date" checked> Date</label>
+            <label><input type="checkbox" value="Project Name" checked> Project Name</label>
+            <label><input type="checkbox" value="Phase" checked> Phase</label>
+            <label><input type="checkbox" value="Lot #" checked> Lot #</label>
+            <label><input type="checkbox" value="Service Form"> Service Form</label>
+            <label><input type="checkbox" value="Item #" checked> Item #</label>
+            <label><input type="checkbox" value="Location" checked> Location</label>
+            <label><input type="checkbox" value="Room/Area" checked> Room/Area</label>
+            <label><input type="checkbox" value="Item/Defect Area" checked> Item/Defect Area</label>
+            <label><input type="checkbox" value="Description" checked> Description</label>
+            <label><input type="checkbox" value="Additional Information" checked> Additional Information</label>
+            <label><input type="checkbox" value="Assigned Trade" checked> Assigned Trade</label>
+            <label><input type="checkbox" value="Notified Status"> Notified Status</label>
+            <label><input type="checkbox" value="Scheduled Date" checked> Scheduled Date</label>
+            <label><input type="checkbox" value="Warranted"> Warranted</label>
+            <label><input type="checkbox" value="Status" checked> Status</label>
+            <label><input type="checkbox" value="Photo Link"> Photo Link</label>
+        </div>
+        
+        <button type="button" class="btn-submit" style="width:100%; margin-top:20px;" id="btnGenerateReport" onclick="generateReport()">Create PDF Report</button>
+        <span id="reportStatusMsg" style="color:#4a6b5d; font-weight:bold; display:block; margin-top:10px; text-align:center;"></span>
+      </div>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div id="userSettingsModal" class="modal">
+      <div class="modal-content" style="max-width: 600px;">
+        <span class="close" onclick="closeUserSettingsModal()">&times;</span>
+        <h3 style="margin-top:0;">User Preferences</h3>
+        <hr style="border:0; border-top:1px solid #eee; margin-bottom:15px;">
+        <form onsubmit="saveUserSettings(event)">
+          
+          <div class="form-row">
+            <label style="font-weight:bold; font-size:14px; width: 100%;">Default Startup Tab:</label>
+            <select id="settingDefaultTab" style="width:100%;">
+              <option value="Service_Directory">Service Requests</option>
+              <option value="Service_Orders">Service Orders</option>
+              <option value="Service_Schedule">Schedule</option>
+              <option value="Directory">Contractors</option>
+              <option value="PO_Directory">Purchase Orders</option>
+              <option value="Homeowner_Directory">Homeowners</option>
+            </select>
+          </div>
+          
+          <h4 style="margin-bottom: 5px; margin-top: 20px;">Hide Columns by Tab</h4>
+          <span class="help-text">Check the boxes for any columns you want hidden on your specific views.</span>
+          
+          <div class="form-row" style="margin-top: 10px; align-items: stretch;">
+            <div style="flex:1;">
+              <label style="font-size:12px; font-weight:bold;">Service Requests:</label>
+              <div id="hide_requests" class="checkbox-group">
+                <label><input type="checkbox" value="project name"> Project Name</label>
+                <label><input type="checkbox" value="phase"> Phase</label>
+                <label><input type="checkbox" value="lot #"> Lot #</label>
+                <label><input type="checkbox" value="civic address"> Civic Address</label>
+                <label><input type="checkbox" value="model"> Model</label>
+              </div>
+            </div>
+            <div style="flex:1;">
+              <label style="font-size:12px; font-weight:bold;">Service Orders:</label>
+              <div id="hide_orders" class="checkbox-group">
+                <label><input type="checkbox" value="date"> Date</label>
+                <label><input type="checkbox" value="project name"> Project Name</label>
+                <label><input type="checkbox" value="phase"> Phase</label>
+                <label><input type="checkbox" value="lot #"> Lot #</label>
+                <label><input type="checkbox" value="service form"> Service Form</label>
+                <label><input type="checkbox" value="item #"> Item #</label>
+                <label><input type="checkbox" value="location"> Location</label>
+                <label><input type="checkbox" value="room/area"> Room/Area</label>
+                <label><input type="checkbox" value="item/defect area"> Item/Defect Area</label>
+                <label><input type="checkbox" value="description"> Description</label>
+                <label><input type="checkbox" value="additional information"> Additional Information</label>
+                <label><input type="checkbox" value="assigned trade"> Assigned Trade</label>
+                <label><input type="checkbox" value="notified status"> Notified Status</label>
+                <label><input type="checkbox" value="scheduled date"> Scheduled Date</label>
+                <label><input type="checkbox" value="warranted"> Warranted</label>
+                <label><input type="checkbox" value="status"> Status</label>
+              </div>
+            </div>
+          </div>
+          <div class="form-row" style="margin-top: 10px; align-items: stretch;">
+            <div style="flex:1;">
+              <label style="font-size:12px; font-weight:bold;">Contractors:</label>
+              <div id="hide_contractors" class="checkbox-group">
+                <label><input type="checkbox" value="business name"> Business Name</label>
+                <label><input type="checkbox" value="main contact"> Main Contact</label>
+                <label><input type="checkbox" value="email"> Email</label>
+                <label><input type="checkbox" value="phone"> Phone</label>
+                <label><input type="checkbox" value="address"> Address</label>
+                <label><input type="checkbox" value="trade type"> Trade Type</label>
+              </div>
+            </div>
+            <div style="flex:1;">
+              <label style="font-size:12px; font-weight:bold;">Purchase Orders:</label>
+              <div id="hide_pos" class="checkbox-group">
+                <label><input type="checkbox" value="date"> Date</label>
+                <label><input type="checkbox" value="project name"> Project Name</label>
+                <label><input type="checkbox" value="po number"> PO Number</label>
+                <label><input type="checkbox" value="lot #"> Lot #</label>
+                <label><input type="checkbox" value="trade"> Trade</label>
+                <label><input type="checkbox" value="total"> Total</label>
+                <label><input type="checkbox" value="status"> Status</label>
+                <label><input type="checkbox" value="paid"> Paid</label>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-submit" style="width: 100%; margin-top: 15px;">Save Preferences</button>
+          <span id="settingsStatusMsg" style="color: #4a6b5d; font-weight:bold; display:block; margin-top:10px; text-align: center;"></span>
+        </form>
+
+        <hr style="border:0; border-top:1px solid #eee; margin-top:20px; margin-bottom:15px;">
+        <h4 style="margin-bottom: 5px; margin-top: 20px;">Change Password</h4>
+        <div class="form-row">
+          <input type="password" id="oldPassword" placeholder="Current Password" style="flex: 1;">
+          <input type="password" id="newPassword" placeholder="New Password" style="flex: 1;">
+          <button type="button" class="btn-submit" style="background-color: #1c2d42;" onclick="submitPasswordChange()">Update Password</button>
+        </div>
+        <span id="passwordStatusMsg" style="color: #4a6b5d; font-weight:bold; display:block; margin-top:5px; font-size: 13px;"></span>
+      </div>
+    </div>
+
+    <!-- PO MANAGE MODAL -->
+    <div id="manageModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal()">x</span>
+        <h3 id="modalTitle" style="margin-top:0;">Manage PO: </h3>
+        <h4 style="margin-bottom: 5px;">Update Status</h4>
+        <div class="form-row">
+          <select id="modalStatusSelect">
+            <option value="Open">Open</option><option value="Pending">Pending</option>
+            <option value="Approved">Approved</option><option value="Void">Void</option>
+          </select>
+          <button type="button" class="btn-filter" onclick="saveStatus()">Update Status</button>
+        </div>
+        <span id="statusUpdateMsg" style="color:#4a6b5d;"></span>
+        <input type="hidden" id="modalPoNum">
+      </div>
+    </div>
+
+    <!-- REJECT SERVICE ITEM MODAL -->
+    <div id="rejectServiceModal" class="modal" style="z-index: 1001;">
+      <div class="modal-content" style="max-width: 400px;">
+        <span class="close" onclick="closeRejectModal()">&times;</span>
+        <h4 style="margin-top:0; color:#8b3a3a;">Item Not Approved</h4>
+        <p style="font-size:13px; color:#666;">Provide a reason and an optional photo to send directly to the trade. Status will be reverted to 'Assigned'.</p>
+        
+        <label style="font-weight:bold; font-size:12px; display:block; margin-bottom:5px;">Reason for Rejection (Required):</label>
+        <textarea id="rejectReasonText" rows="4" style="width:100%; box-sizing:border-box; padding:8px; border:1px solid #ccc; border-radius:3px; margin-bottom:10px; font-family:inherit;"></textarea>
+        
+        <label style="font-weight:bold; font-size:12px; display:block; margin-bottom:5px;">Attach Photo (Optional):</label>
+        <input type="file" id="rejectPhotoFile" accept="image/*,.pdf" style="margin-bottom:15px; width:100%; border:1px solid #ccc; padding:5px; background:white; border-radius:3px;">
+        
+        <button type="button" class="btn-submit" id="btnConfirmReject" style="width:100%; background-color:#8b3a3a;" onclick="confirmRejectService()">Reject & Email Trade</button>
+      </div>
+    </div>
+
+    <!-- SERVICE ITEM MANAGE MODAL -->
+    <div id="manageServiceModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeManageServiceModal()">x</span>
+        <h3 id="serviceModalTitle" style="margin-top:0;">Manage Service Item</h3>
+        
+        <div style="margin-top:15px;">
+          <label style="font-weight:bold; font-size:14px; display:block; margin-bottom:5px;">Item Details</label>
+          <select id="serviceModalWarrantedSelect" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 3px; font-family: inherit;">
+            <option value="">-- Select Warranty Status --</option>
+            <option value="Warrantable">Warrantable</option>
+            <option value="Not warrantable">Not warrantable</option>
+          </select>
+        </div>
+
+        <div style="margin-top:15px;">
+          <label style="font-weight:bold; font-size:14px; display:block; margin-bottom:5px;">Scheduled Service date</label>
+          <input type="date" id="serviceModalSchedDate" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 3px; font-family: inherit;">
+        </div>
+
+        <div style="margin-top:15px;">
+          <label style="font-weight:bold; font-size:14px; display:block; margin-bottom:5px;">Update Status</label>
+          <select id="serviceModalStatusSelect" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 3px; font-family: inherit;">
+            <option value="Unreviewed">Unreviewed</option>
+            <option value="Reviewed">Reviewed</option>
+            <option value="Assigned">Assigned</option>
+            <option value="Completed">Completed</option>
+            <option value="Approved">Approved</option>
+          </select>
+        </div>
+        
+        <button type="button" class="btn-filter" style="width:100%; margin-top:20px; padding:10px; font-size:15px;" onclick="saveServiceStatus()">Save & Update Sheets</button>
+        <span id="serviceStatusUpdateMsg" style="color:#4a6b5d; font-weight:bold; display:block; margin-top:10px; text-align:center;"></span>
+        
+        <input type="hidden" id="serviceModalProject">
+        <input type="hidden" id="serviceModalPhase">
+        <input type="hidden" id="serviceModalLot">
+        <input type="hidden" id="serviceModalForm">
+        <input type="hidden" id="serviceModalItem">
+        <input type="hidden" id="serviceModalTrade">
+        <input type="hidden" id="serviceModalCurrentStatus">
+        <input type="hidden" id="serviceModalOriginalSchedDate">
+      </div>
+    </div>
+
+    <!-- SCHEDULE EVENT MODAL -->
+    <div id="eventModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeEventModal()">x</span>
+        <h3 id="eventModalTitle" style="margin-top:0; color:#1c2d42;">Service Event Details</h3>
+        <hr style="border:0; border-top:1px solid #eee; margin-bottom:15px;">
+        <div id="eventModalBody" style="line-height: 1.8; font-size: 14px;"></div>
+      </div>
+    </div>
+
+    <!-- AI WIDGET -->
+    <div class="ai-chat-launcher" id="aiLauncher" onclick="toggleAiChat()" title="Ask Gemini AI">✨</div>
+    <div class="ai-chat-window" id="aiChatWindow">
+      <div class="ai-chat-header">
+        <span>🤖 Build Connect AI Assistant</span>
+        <span class="ai-chat-close" onclick="toggleAiChat()">&times;</span>
+      </div>
+      <div class="ai-chat-messages" id="aiChatMessages">
+        <div class="ai-msg ai-msg-bot">Hello! Ask me any tracking question, or mention a specific Lot/Project to scan through its local Google Sheets schedules or Google Docs color selections. (Note: I am restricted from parsing static PDFs).</div>
+      </div>
+      <div class="ai-chat-footer">
+        <input type="text" id="aiChatInput" placeholder="Type your query here..." onkeypress="handleAiKeyPress(event)">
+        <button type="button" onclick="sendAiMessage()">Send</button>
+      </div>
+    </div>
+
+    <script>
+      var currentUser = null; 
+      var globalLotMap = {}; var globalTradeMap = {}; var globalLotOptionsMap = {}; var globalLotHierarchy = {}; 
+      var globalCostCodes = []; 
+      var globalCalendarEvents = [];
+      var globalHomeownerData = [];
+      var calendar;
+
+      // --- TABLE SORTING LOGIC ---
+      function sortTable(tableId, colIndex) {
+        var table = document.getElementById(tableId);
+        if (!table) return;
+        var rows = Array.prototype.slice.call(table.rows);
+        var headerRow = rows.shift(); 
+        var th = headerRow.cells[colIndex];
+        if (!th) return;
+        
+        var isAsc = th.dataset.asc === 'true';
+        th.dataset.asc = !isAsc;
+
+        Array.prototype.slice.call(headerRow.cells).forEach(function(c) {
+          c.innerHTML = c.innerHTML.replace(' ▲', '').replace(' ▼', '');
+        });
+        
+        th.innerHTML = th.innerHTML + (isAsc ? ' ▼' : ' ▲');
+
+        rows.sort(function(a, b) {
+          var valA = a.cells[colIndex] ? a.cells[colIndex].textContent.trim() : "";
+          var valB = b.cells[colIndex] ? b.cells[colIndex].textContent.trim() : "";
+          
+          var isCurrencyA = valA.indexOf('$') > -1;
+          var numA = isCurrencyA ? parseFloat(valA.replace(/[^0-9.-]+/g,"")) : parseFloat(valA);
+          var numB = (valB.indexOf('$') > -1) ? parseFloat(valB.replace(/[^0-9.-]+/g,"")) : parseFloat(valB);
+          
+          if (!isNaN(numA) && !isNaN(numB) && valA !== "" && valB !== "") {
+            return isAsc ? Number(numB) - Number(numA) : Number(numA) - Number(numB);
+          }
+          return isAsc ? valB.localeCompare(valA) : valA.localeCompare(valB);
+        });
+
+        rows.forEach(function(row) {
+          table.appendChild(row);
+        });
+      }
+
+      // --- USER SETTINGS MODAL LOGIC ---
+      function openUserSettingsModal() {
+        document.getElementById("userSettingsModal").style.display = "block";
+        document.getElementById("settingDefaultTab").value = currentUser.defaultTab || "Service_Directory";
+        
+        setCheckboxValues("hide_requests", currentUser.hiddenHeadings["Service_Directory"] || []);
+        setCheckboxValues("hide_orders", currentUser.hiddenHeadings["Service_Orders"] || []);
+        setCheckboxValues("hide_contractors", currentUser.hiddenHeadings["Directory"] || []);
+        setCheckboxValues("hide_pos", currentUser.hiddenHeadings["PO_Directory"] || []);
+
+        document.getElementById("settingsStatusMsg").innerText = "";
+      }
+
+      function closeUserSettingsModal() { document.getElementById("userSettingsModal").style.display = "none"; }
+
+      function getCheckboxValues(containerId) {
+        var container = document.getElementById(containerId);
+        var checkboxes = container.querySelectorAll("input[type='checkbox']");
+        var vals = [];
+        for (var i = 0; i < checkboxes.length; i++) {
+          if (checkboxes[i].checked) vals.push(checkboxes[i].value);
+        }
+        return vals;
+      }
+
+      function setCheckboxValues(containerId, valsArray) {
+        var container = document.getElementById(containerId);
+        var checkboxes = container.querySelectorAll("input[type='checkbox']");
+        for (var i = 0; i < checkboxes.length; i++) {
+          checkboxes[i].checked = valsArray.indexOf(checkboxes[i].value) > -1;
+        }
+      }
+
+      function saveUserSettings(e) {
+        e.preventDefault();
+        var defaultTab = document.getElementById("settingDefaultTab").value;
+        var hiddenSettings = {
+           "Service_Directory": getCheckboxValues("hide_requests"),
+           "Service_Orders": getCheckboxValues("hide_orders"),
+           "Directory": getCheckboxValues("hide_contractors"),
+           "PO_Directory": getCheckboxValues("hide_pos")
+        };
+
+        var hiddenStr = JSON.stringify(hiddenSettings);
+        document.getElementById("settingsStatusMsg").innerText = "Saving preferences...";
+        
+        google.script.run.withSuccessHandler(function(res) {
+          if(res === "Success") {
+            document.getElementById("settingsStatusMsg").innerText = "Saved successfully!";
+            currentUser.defaultTab = defaultTab;
+            currentUser.hiddenHeadings = hiddenSettings;
+            setTimeout(function() { closeUserSettingsModal(); initializeApp(); }, 1500);
+          } else {
+            document.getElementById("settingsStatusMsg").innerText = res;
+          }
+        }).updateUserPreferences(currentUser.email, defaultTab, hiddenStr);
+      }
+
+      function submitPasswordChange() {
+        var oldPass = document.getElementById("oldPassword").value;
+        var newPass = document.getElementById("newPassword").value;
+        var statusMsg = document.getElementById("passwordStatusMsg");
+        
+        if (!oldPass || !newPass) {
+          statusMsg.style.color = "#8b3a3a";
+          statusMsg.innerText = "Please fill in both password fields.";
+          return;
+        }
+        
+        statusMsg.style.color = "#4a6b5d";
+        statusMsg.innerText = "Updating password...";
+        
+        google.script.run.withSuccessHandler(function(res) {
+          if (res === "Success") {
+            statusMsg.style.color = "#4a6b5d";
+            statusMsg.innerText = "Password updated successfully!";
+            document.getElementById("oldPassword").value = "";
+            document.getElementById("newPassword").value = "";
+            setTimeout(function() { statusMsg.innerText = ""; }, 3000);
+          } else {
+            statusMsg.style.color = "#8b3a3a";
+            statusMsg.innerText = res;
+          }
+        }).changeUserPassword(currentUser.email, oldPass, newPass);
+      }
+
+      // --- LOGIN LOGIC ---
+      function handleLogin(e) {
+        e.preventDefault();
+        var email = document.getElementById("loginEmail").value;
+        var pass = document.getElementById("loginPassword").value;
+        document.getElementById("loginError").innerText = "Authenticating...";
+        
+        google.script.run.withSuccessHandler(function(res) {
+          if(res.success) {
+            currentUser = res;
+            document.getElementById("loginWall").style.display = "none";
+            document.getElementById("mainApp").style.display = "block";
+            document.getElementById("userSettingsBtn").style.display = "block"; 
+            document.getElementById("refreshBtn").style.display = "block";
+            
+            if (currentUser.defaultTab && currentUser.defaultTab.trim() !== "") {
+              var tabBtn = document.querySelector("button[onclick*='" + currentUser.defaultTab + "']");
+              if (tabBtn) tabBtn.click();
+            }
+
+            initializeApp(); 
+          } else {
+            document.getElementById("loginError").innerText = res.message;
+          }
+        }).authenticateUser(email, pass);
+      }
+
+      function initializeApp() {
+        loadTable(); 
+        loadCostCodes(); 
+        loadPOFormData(); 
+        loadPOTable(); 
+        loadTradeTypes(); 
+        loadServiceTable(); 
+        loadServiceOrderFilters();
+        loadScheduleData();
+        loadLotsHierarchy();
+        loadHoTable();
+      }
+
+      function refreshAppData() {
+        var btn = document.getElementById("refreshBtn");
+        btn.innerText = "⏳ Syncing...";
+        btn.disabled = true;
+        initializeApp();
+        setTimeout(function() {
+          btn.innerText = "🔄 Refresh";
+          btn.disabled = false;
+        }, 2000);
+      }
+
+      function openTab(evt, tabName) {
+        var i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tabcontent");
+        for (i = 0; i < tabcontent.length; i++) { tabcontent[i].style.display = "none"; }
+        tablinks = document.getElementsByClassName("tablinks");
+        for (i = 0; i < tablinks.length; i++) { tablinks[i].className = tablinks[i].className.replace(" active", ""); }
+        document.getElementById(tabName).style.display = "block";
+        if(evt) evt.currentTarget.className += " active";
+        
+        if (tabName === 'Service_Schedule' && typeof calendar !== 'undefined') {
+             setTimeout(function() { calendar.render(); }, 100);
+        }
+      }
+
+      function alphaNumSort(arr) { return arr.sort(function(a, b) { var numA = parseFloat(a), numB = parseFloat(b); if (!isNaN(numA) && !isNaN(numB) && numA !== numB) return numA - numB; return String(a).localeCompare(String(b)); }); }
+      
+      function populateDropdown(id, arr, defaultText) { 
+        var sel = document.getElementById(id); if (!sel) return; 
+        var currentVal = sel.value; 
+        var html = "<option value=''>" + defaultText + "</option>"; 
+        for (var i = 0; i < arr.length; i++) { 
+          var safeVal = String(arr[i]).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+          html += "<option value='" + safeVal + "'>" + arr[i] + "</option>"; 
+        } 
+        sel.innerHTML = html; 
+        if (arr.indexOf(currentVal) > -1) sel.value = currentVal; 
+      }
+      
+      function populateSelectHTML(id, arr, txt) { var sel = document.getElementById(id); if(!sel) return; var html = "<option value='' disabled selected>" + txt + "</option>"; for (var i = 0; i < arr.length; i++) { var strValue = String(arr[i]); var safeValue = strValue.replace(/'/g, "&apos;").replace(/"/g, "&quot;"); html += "<option value='" + safeValue + "'>" + strValue + "</option>"; } sel.innerHTML = html; }
+
+      // --- HOMEOWNER DIRECTORY LOGIC ---
+      function loadLotsHierarchy() {
+        google.script.run.withSuccessHandler(function(res) {
+           globalLotHierarchy = res.hierarchy;
+           populateSelectHTML("hoProject", res.projects, "Select Project");
+           populateSelectHTML("editHoProject", res.projects, "Select Project");
+           populateSelectHTML("mwProject", res.projects, "Select Project");
+           
+           var filterProj = document.getElementById("filterHoProject");
+           if (filterProj) {
+              var currentFilter = filterProj.value;
+              var filterHtml = "<option value=''>All Projects</option>";
+              for(var i=0; i<res.projects.length; i++) { filterHtml += "<option value='" + res.projects[i] + "'>" + res.projects[i] + "</option>"; }
+              filterProj.innerHTML = filterHtml;
+              filterProj.value = currentFilter;
+           }
+        }).getLotsHierarchy();
+      }
+
+      function updateHoPhaseDropdown() {
+        var proj = document.getElementById("hoProject").value;
+        var phases = globalLotHierarchy[proj] ? alphaNumSort(Object.keys(globalLotHierarchy[proj])) : [];
+        populateSelectHTML("hoPhase", phases, "Select Phase");
+        document.getElementById("hoLot").innerHTML = "<option value='' disabled selected>Select Phase First</option>";
+      }
+
+      function updateHoLotDropdown() {
+        var proj = document.getElementById("hoProject").value;
+        var phase = document.getElementById("hoPhase").value;
+        var lots = (globalLotHierarchy[proj] && globalLotHierarchy[proj][phase]) ? alphaNumSort(globalLotHierarchy[proj][phase]) : [];
+        populateSelectHTML("hoLot", lots, "Select Lot");
+      }
+
+      function submitHomeownerForm(event) {
+        event.preventDefault();
+        var formData = { 
+            firstName: document.getElementById('hoFirstName').value, 
+            lastName: document.getElementById('hoLastName').value, 
+            email: document.getElementById('hoEmail').value, 
+            phone: document.getElementById('hoPhone').value, 
+            project: document.getElementById('hoProject').value, 
+            phase: document.getElementById('hoPhase').value, 
+            lot: document.getElementById('hoLot').value 
+        };
+        
+        document.getElementById("hoStatusMsg").innerText = "Saving to directory...";
+        google.script.run.withSuccessHandler(function(res) { 
+            if (res === "Success") {
+               document.getElementById("hoStatusMsg").innerText = "Homeowner Saved!"; 
+               document.getElementById("homeownerForm").reset(); 
+               setTimeout(function() { document.getElementById("hoStatusMsg").innerText = ""; }, 3000); 
+               loadHoTable();
+            } else {
+               document.getElementById("hoStatusMsg").style.color = "#8b3a3a";
+               document.getElementById("hoStatusMsg").innerText = res;
+            }
+        }).addHomeowner(formData);
+      }
+
+      function loadHoTable() {
+        document.getElementById("hoTableContainer").innerHTML = "<i>Loading data...</i>";
+        google.script.run.withSuccessHandler(function(data){
+          globalHomeownerData = data;
+          applyHoFilters(); 
+        }).getHomeownerData();
+      }
+
+      function buildHoTable(data) {
+        if (!data || data.length <= 1) { 
+           document.getElementById("hoTableContainer").innerHTML = "<p style='color:#666; font-style:italic;'>No homeowner records found.</p>"; 
+           return; 
+        }
+        var headers = data[0];
+        var html = "<table id='hoTable'>";
+        
+        for (var i = 0; i < data.length; i++) {
+          html += "<tr>";
+          for (var j = 0; j < data[i].length; j++) {
+            if (j === 4) continue; 
+            var safeLabel = String(headers[j]).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+            
+            if (i === 0) {
+              html += "<th class='sort-header' onclick=\"sortTable('hoTable', " + j + ")\">" + data[i][j] + "</th>";
+            } else {
+              html += "<td data-label='" + safeLabel + "'>" + data[i][j] + "</td>";
+            }
+          }
+          if (i === 0) {
+            html += "<th>Actions</th>";
+          } else {
+            var rowDataStr = encodeURIComponent(JSON.stringify(data[i]));
+            var safeEmail = String(data[i][3]).replace(/'/g, "\\'");
+            var safeProj = String(data[i][5]).replace(/'/g, "\\'");
+            var safePhase = String(data[i][6]).replace(/'/g, "\\'");
+            var safeLot = String(data[i][7]).replace(/'/g, "\\'");
+            
+            html += "<td data-label='Actions'>" +
+                    "<button class='btn-folder' style='background-color:#c6a87c; color:#1c2d42; font-weight:bold; margin-right:5px;' onclick=\"openEditHoModal('" + rowDataStr + "')\">Manage</button>" +
+                    "<button class='btn-delete' onclick=\"deleteHoRecord('" + safeEmail + "', '" + safeProj + "', '" + safePhase + "', '" + safeLot + "')\">Delete</button>" +
+                    "</td>";
+          }
+          html += "</tr>";
+        }
+        document.getElementById("hoTableContainer").innerHTML = html + "</table>";
+      }
+
+      function applyHoFilters() {
+         if (!globalHomeownerData || globalHomeownerData.length === 0) return;
+         
+         var nameFilter = document.getElementById("filterHoName").value.toLowerCase();
+         var emailFilter = document.getElementById("filterHoEmail").value.toLowerCase();
+         var projFilter = document.getElementById("filterHoProject").value.toLowerCase();
+         
+         var headers = globalHomeownerData[0];
+         var filtered = [headers];
+         
+         for (var i = 1; i < globalHomeownerData.length; i++) {
+            var row = globalHomeownerData[i];
+            var fName = String(row[0]).toLowerCase();
+            var lName = String(row[1]).toLowerCase();
+            var fullName = fName + " " + lName;
+            var email = String(row[3]).toLowerCase();
+            var proj = String(row[5]).toLowerCase();
+            
+            if (nameFilter && fullName.indexOf(nameFilter) === -1) continue;
+            if (emailFilter && email.indexOf(emailFilter) === -1) continue;
+            if (projFilter && proj !== projFilter) continue;
+            
+            filtered.push(row);
+         }
+         buildHoTable(filtered);
+      }
+
+      function clearHoFilters() {
+         document.getElementById("filterHoName").value = "";
+         document.getElementById("filterHoEmail").value = "";
+         document.getElementById("filterHoProject").value = "";
+         buildHoTable(globalHomeownerData);
+      }
+
+      function openEditHoModal(encodedData) {
+         var data = JSON.parse(decodeURIComponent(encodedData));
+         document.getElementById("editHomeownerModal").style.display = "block";
+         
+         document.getElementById("editHoOrigEmail").value = data[3];
+         document.getElementById("editHoOrigProject").value = data[5];
+         document.getElementById("editHoOrigPhase").value = data[6];
+         document.getElementById("editHoOrigLot").value = data[7];
+         
+         document.getElementById("editHoFirstName").value = data[0];
+         document.getElementById("editHoLastName").value = data[1];
+         document.getElementById("editHoPhone").value = data[2];
+         document.getElementById("editHoEmail").value = data[3];
+         
+         var projSelect = document.getElementById("editHoProject");
+         projSelect.value = data[5];
+         updateEditHoPhaseDropdown();
+         
+         var phaseSelect = document.getElementById("editHoPhase");
+         phaseSelect.value = data[6];
+         updateEditHoLotDropdown();
+         
+         document.getElementById("editHoLot").value = data[7];
+         
+         document.getElementById("editHoStatusMsg").innerText = "";
+      }
+
+      function closeEditHoModal() {
+         document.getElementById("editHomeownerModal").style.display = "none";
+      }
+
+      function updateEditHoPhaseDropdown() {
+        var proj = document.getElementById("editHoProject").value;
+        var phases = globalLotHierarchy[proj] ? alphaNumSort(Object.keys(globalLotHierarchy[proj])) : [];
+        populateSelectHTML("editHoPhase", phases, "Select Phase");
+        document.getElementById("editHoLot").innerHTML = "<option value='' disabled selected>Select Phase First</option>";
+      }
+
+      function updateEditHoLotDropdown() {
+        var proj = document.getElementById("editHoProject").value;
+        var phase = document.getElementById("editHoPhase").value;
+        var lots = (globalLotHierarchy[proj] && globalLotHierarchy[proj][phase]) ? alphaNumSort(globalLotHierarchy[proj][phase]) : [];
+        populateSelectHTML("editHoLot", lots, "Select Lot");
+      }
+
+      function submitEditHoForm(e) {
+         e.preventDefault();
+         var formData = {
+            originalEmail: document.getElementById("editHoOrigEmail").value,
+            originalProject: document.getElementById("editHoOrigProject").value,
+            originalPhase: document.getElementById("editHoOrigPhase").value,
+            originalLot: document.getElementById("editHoOrigLot").value,
+            firstName: document.getElementById("editHoFirstName").value,
+            lastName: document.getElementById("editHoLastName").value,
+            phone: document.getElementById("editHoPhone").value,
+            email: document.getElementById("editHoEmail").value,
+            project: document.getElementById("editHoProject").value,
+            phase: document.getElementById("editHoPhase").value,
+            lot: document.getElementById("editHoLot").value
+         };
+         
+         document.getElementById("editHoStatusMsg").innerText = "Saving changes...";
+         google.script.run.withSuccessHandler(function(res){
+            if (res === "Success") {
+               document.getElementById("editHoStatusMsg").innerText = "Updated Successfully!";
+               setTimeout(function(){ 
+                 closeEditHoModal(); 
+                 loadHoTable(); 
+               }, 1500);
+            } else {
+               document.getElementById("editHoStatusMsg").style.color = "#8b3a3a";
+               document.getElementById("editHoStatusMsg").innerText = res;
+            }
+         }).editHomeowner(formData);
+      }
+
+      function deleteHoRecord(email, project, phase, lot) {
+         if (confirm("Are you sure you want to delete this homeowner record for Lot " + lot + "?")) {
+            document.getElementById("hoTableContainer").innerHTML = "<i>Deleting...</i>";
+            google.script.run.withSuccessHandler(function(res){
+               loadHoTable();
+            }).deleteHomeowner(email, project, phase, lot);
+         }
+      }
+
+      // --- TAB 1 (CONTRACTORS) ---
+      function loadTable() { google.script.run.withSuccessHandler(buildTable).getContractorData(); }
+      function loadCostCodes() { google.script.run.withSuccessHandler(buildCostCodeDropdown).getCostCodesData(); }
+      
+      function buildCostCodeDropdown(codes) { 
+        globalCostCodes = codes; 
+        var select = document.getElementById("costCodes"), html = ""; 
+        for (var i = 0; i < codes.length; i++) { 
+          var safeVal = String(codes[i]).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+          html += "<option value='" + safeVal + "'>" + codes[i] + "</option>"; 
+        } 
+        select.innerHTML = html; 
+      }
+
+      function loadTradeTypes() {
+        google.script.run.withSuccessHandler(function(types) {
+          populateSelectHTML("tradeType", types, "Select Colour Selection Trade Type");
+        }).getTradeTypesData();
+      }
+      
+      function buildTable(data) {
+        if(!data || data.length === 0) return;
+        var headers = data[0];
+        
+        var tabHidden = currentUser.hiddenHeadings["Directory"] || [];
+        var skipColIndices = [];
+        for (var h = 0; h < headers.length; h++) {
+          if (tabHidden.indexOf(String(headers[h]).trim().toLowerCase()) > -1) {
+            skipColIndices.push(h);
+          }
+        }
+
+        var html = "<table id='contractorTable'>";
+        for (var i = 0; i < data.length; i++) {
+          html += "<tr>";
+          for (var j = 0; j < data[i].length; j++) { 
+            if (j === 6 || skipColIndices.indexOf(j) > -1) continue; 
+            if (i === 0) {
+              html += "<th class='sort-header' onclick=\"sortTable('contractorTable', " + j + ")\">" + data[i][j] + "</th>"; 
+            } else {
+              var safeLabel = String(headers[j]).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+              html += "<td data-label='" + safeLabel + "'>" + data[i][j] + "</td>"; 
+            }
+          }
+          if (i === 0) {
+            html += "<th>Actions</th>"; 
+          } else {
+            var rowDataStr = encodeURIComponent(JSON.stringify(data[i]));
+            var safeBizName = String(data[i][0]).replace(/'/g, "\\'"); 
+            html += "<td data-label='Actions'>" +
+                    "<button class='btn-folder' style='background-color:#c6a87c; color:#1c2d42; font-weight:bold; margin-right:5px;' onclick=\"openEditContractorModal('" + rowDataStr + "')\">Edit</button>" +
+                    "<button class='btn-delete' onclick=\"triggerDelete('" + safeBizName + "')\">Delete</button>" +
+                    "</td>"; 
+          }
+          html += "</tr>";
+        }
+        document.getElementById("tableContainer").innerHTML = html + "</table>";
+      }
+      
+      function submitForm(event) {
+        event.preventDefault();
+        var selCodes = document.getElementById('costCodes'), codes = []; for (var i = 0; i < selCodes.options.length; i++) { if (selCodes.options[i].selected) codes.push(selCodes.options[i].value); }
+        var selProjs = document.getElementById('contractorProjects'), projs = []; for (var p = 0; p < selProjs.options.length; p++) { if (selProjs.options[p].selected) projs.push(selProjs.options[p].value); }
+        
+        var formData = { 
+            businessName: document.getElementById('bizName').value, 
+            contact: document.getElementById('contact').value, 
+            email: document.getElementById('email').value, 
+            phone: document.getElementById('phone').value, 
+            tradeType: document.getElementById('tradeType').value,
+            address: document.getElementById('address').value, 
+            costCodes: codes.join(", "), 
+            activityCode: "", 
+            projects: projs.join(", ") 
+        };
+        document.getElementById("statusMsg").innerText = "Generating Smart Tabs... Please wait.";
+        google.script.run.withSuccessHandler(function() { 
+            document.getElementById("statusMsg").innerText = "Saved & Tabs Created!"; 
+            document.getElementById("contractorForm").reset(); 
+            setTimeout(function() { document.getElementById("statusMsg").innerText = ""; }, 4000); 
+            loadTable(); 
+            loadPOFormData(); 
+        }).addContractor(formData);
+      }
+
+      function triggerDelete(businessName) { if(confirm("Delete contractor: " + businessName + "?")) { document.getElementById("tableContainer").innerHTML = "Deleting..."; google.script.run.withSuccessHandler(loadTable).deleteContractor(businessName); } }
+
+      // --- EDIT CONTRACTOR LOGIC ---
+      function openEditContractorModal(encodedData) {
+        var data = JSON.parse(decodeURIComponent(encodedData));
+        document.getElementById('editContractorModal').style.display = 'block';
+        document.getElementById('editOriginalBizName').value = data[0];
+        document.getElementById('editBizName').value = data[0];
+        document.getElementById('editContact').value = data[1];
+        document.getElementById('editEmail').value = data[2];
+        document.getElementById('editPhone').value = data[3];
+        document.getElementById('editAddress').value = data[4];
+        
+        document.getElementById('editTradeType').innerHTML = document.getElementById('tradeType').innerHTML;
+        document.getElementById('editTradeType').value = data[8];
+
+        var editCodes = document.getElementById('editCostCodes');
+        editCodes.innerHTML = document.getElementById('costCodes').innerHTML;
+        var selectedCodes = data[5] ? data[5].split(',').map(function(s) { return s.trim(); }) : [];
+        for (var i = 0; i < editCodes.options.length; i++) {
+          editCodes.options[i].selected = selectedCodes.indexOf(editCodes.options[i].value) > -1;
+        }
+
+        var editProjs = document.getElementById('editContractorProjects');
+        editProjs.innerHTML = document.getElementById('contractorProjects').innerHTML;
+        var selectedProjs = data[7] ? data[7].split(',').map(function(s) { return s.trim(); }) : [];
+        for (var p = 0; p < editProjs.options.length; p++) {
+          editProjs.options[p].selected = selectedProjs.indexOf(editProjs.options[p].value) > -1;
+        }
+        
+        document.getElementById('editContractorStatusMsg').innerText = "";
+      }
+
+      function closeEditContractorModal() {
+        document.getElementById('editContractorModal').style.display = 'none';
+      }
+
+      function submitEditContractorForm(event) {
+        event.preventDefault();
+        var selCodes = document.getElementById('editCostCodes'), codes = []; 
+        for (var i = 0; i < selCodes.options.length; i++) { if (selCodes.options[i].selected) codes.push(selCodes.options[i].value); }
+        
+        var selProjs = document.getElementById('editContractorProjects'), projs = []; 
+        for (var p = 0; p < selProjs.options.length; p++) { if (selProjs.options[p].selected) projs.push(selProjs.options[p].value); }
+        
+        var formData = { 
+            originalBusinessName: document.getElementById('editOriginalBizName').value,
+            businessName: document.getElementById('editBizName').value, 
+            contact: document.getElementById('editContact').value, 
+            email: document.getElementById('editEmail').value, 
+            phone: document.getElementById('editPhone').value, 
+            tradeType: document.getElementById('editTradeType').value,
+            address: document.getElementById('editAddress').value, 
+            costCodes: codes.join(", "), 
+            activityCode: "", 
+            projects: projs.join(", ") 
+        };
+        
+        document.getElementById("editContractorStatusMsg").innerText = "Saving changes and generating tabs... Please wait.";
+        google.script.run.withSuccessHandler(function(res) { 
+            if (res.indexOf("Error") > -1) {
+                alert(res);
+                document.getElementById("editContractorStatusMsg").innerText = "";
+            } else {
+                document.getElementById("editContractorStatusMsg").innerText = "Updated Successfully!"; 
+                setTimeout(function() { 
+                    closeEditContractorModal(); 
+                    loadTable(); 
+                    loadPOFormData(); 
+                }, 2000); 
+            }
+        }).editContractor(formData);
+      }
+
+      // --- CALENDAR SCHEDULE INIT & DYNAMIC FILTERS ---
+      function loadScheduleData() {
+         document.getElementById("scheduleLegend").innerHTML = "<i>Loading...</i>";
+         google.script.run.withSuccessHandler(function(events) {
+           globalCalendarEvents = events;
+           updateCalendarFilters('init');
+         }).getScheduleEvents(currentUser.projects);
+      }
+
+      function updateCalendarFilters(changedId) {
+         var selectedProj = document.getElementById("calFilterProject").value;
+         var selectedPhase = document.getElementById("calFilterPhase").value;
+         var selectedLot = document.getElementById("calFilterLot") ? document.getElementById("calFilterLot").value : "";
+         var selectedTrade = document.getElementById("calFilterTrade").value;
+         var selectedStatus = document.getElementById("calFilterStatus").value;
+
+         if (changedId === 'calFilterProject') {
+             selectedPhase = ""; selectedLot = ""; selectedTrade = ""; selectedStatus = "";
+         } else if (changedId === 'calFilterPhase') {
+             selectedLot = ""; selectedTrade = ""; selectedStatus = "";
+         } else if (changedId === 'calFilterLot') {
+             selectedTrade = ""; selectedStatus = "";
+         }
+
+         var projects = [], phases = [], lots = [], trades = [], statuses = [];
+
+         var filteredEvents = globalCalendarEvents.filter(function(e) {
+             var p = e.extendedProps;
+             
+             if (p.project && projects.indexOf(p.project) === -1) projects.push(p.project);
+
+             var matchProj = !selectedProj || p.project === selectedProj;
+             var matchPhase = !selectedPhase || p.phase === selectedPhase;
+             var matchLot = !selectedLot || p.lot === selectedLot;
+             var matchTrade = !selectedTrade || p.trade === selectedTrade;
+             var matchStatus = !selectedStatus || p.status === selectedStatus;
+
+             if (matchProj) {
+                 if (p.phase && phases.indexOf(p.phase) === -1) phases.push(p.phase);
+                 if (matchPhase) {
+                     if (p.lot && lots.indexOf(p.lot) === -1) lots.push(p.lot);
+                     if (matchLot) {
+                         if (p.trade && trades.indexOf(p.trade) === -1) trades.push(p.trade);
+                         if (p.status && statuses.indexOf(p.status) === -1) statuses.push(p.status);
+                     }
+                 }
+             }
+
+             return matchProj && matchPhase && matchLot && matchTrade && matchStatus;
+         });
+
+         if (changedId === 'init' || changedId === 'calFilterProject') {
+             populateSelectHTML("calFilterProject", alphaNumSort(projects), "All Projects");
+             document.getElementById("calFilterProject").value = selectedProj;
+         }
+         
+         populateSelectHTML("calFilterPhase", alphaNumSort(phases), "All Phases");
+         document.getElementById("calFilterPhase").value = selectedPhase;
+
+         var lotSelect = document.getElementById("calFilterLot");
+         if(lotSelect) {
+             populateSelectHTML("calFilterLot", alphaNumSort(lots), "All Lots");
+             lotSelect.value = selectedLot;
+         }
+
+         populateSelectHTML("calFilterTrade", alphaNumSort(trades), "All Trades");
+         document.getElementById("calFilterTrade").value = selectedTrade;
+
+         populateSelectHTML("calFilterStatus", alphaNumSort(statuses), "All Statuses");
+         document.getElementById("calFilterStatus").value = selectedStatus;
+
+         initCalendar(filteredEvents);
+      }
+
+      function clearCalendarFilters() {
+         document.getElementById("calFilterProject").value = "";
+         document.getElementById("calFilterPhase").value = "";
+         if(document.getElementById("calFilterLot")) document.getElementById("calFilterLot").value = "";
+         document.getElementById("calFilterTrade").value = "";
+         document.getElementById("calFilterStatus").value = "";
+         updateCalendarFilters('init');
+      }
+
+      function initCalendar(events) {
+        var calendarEl = document.getElementById('calendar');
+        if(calendar) { calendar.destroy(); }
+        
+        var legendHtml = "";
+        var seenProjects = [];
+        events.forEach(function(e) {
+           if(seenProjects.indexOf(e.extendedProps.project) === -1) {
+              seenProjects.push(e.extendedProps.project);
+              legendHtml += "<span style='display:inline-block; padding: 4px 10px; font-size:12px; font-weight:bold; margin-right: 10px; border-radius: 4px; color: white; background-color:" + e.color + ";'>" + e.extendedProps.project + "</span>";
+           }
+        });
+        document.getElementById("scheduleLegend").innerHTML = legendHtml || "No scheduled items match filters.";
+
+        calendar = new FullCalendar.Calendar(calendarEl, {
+          initialView: 'dayGridMonth',
+          headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,listWeek'
+          },
+          events: events,
+          eventClick: function(info) {
+             var p = info.event.extendedProps;
+             document.getElementById('eventModalTitle').innerText = "Service details: Lot " + p.lot;
+             document.getElementById('eventModalBody').innerHTML = 
+                "<b>Project:</b> " + p.project + " (Phase " + p.phase + ")<br>" +
+                "<b>Form:</b> " + p.form + "<br>" +
+                "<b>Item #:</b> " + p.item + "<br>" +
+                "<b>Description:</b> " + (p.desc ? p.desc : "<i>N/A</i>") + "<br>" + 
+                "<b>Assigned Trade:</b> " + (p.trade ? p.trade : "<i>Unassigned</i>") + "<br>" +
+                "<b>Date:</b> " + p.originalDateStr + "<br>" +
+                "<b>Status:</b> " + p.status;
+             document.getElementById('eventModal').style.display = 'block';
+          }
+        });
+        calendar.render();
+      }
+
+      function closeEventModal() { document.getElementById('eventModal').style.display = 'none'; }
+
+
+      // --- PURCHASE ORDERS ---
+      function loadPOFormData() {
+        google.script.run.withSuccessHandler(function(data) { 
+          globalLotMap = data.lotMap; 
+          
+          var allowedProjects = data.projects.filter(function(p) {
+            return currentUser.projects.indexOf(p) > -1 || currentUser.projects.toLowerCase().indexOf("all") > -1;
+          });
+
+          populateSelectHTML("poProjectSelect", allowedProjects, "Select Project"); 
+          populateSelectHTML("poTradeSelect", data.trades, "Select Trade"); 
+          populateSelectHTML("photoProjectSelect", allowedProjects, "Select Project"); 
+        }).getPOFormData();
+      }
+
+      function filterPOLotsAndTrades() {
+        var selectedProject = document.getElementById("poProjectSelect").value;
+        var lots = globalLotMap[selectedProject] || []; var htmlLots = "";
+        for (var i = 0; i < lots.length; i++) { 
+          var safeLotVal = String(lots[i].value).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+          htmlLots += "<option value='" + safeLotVal + "'>" + lots[i].display + "</option>"; 
+        } 
+        document.getElementById("poLotSelect").innerHTML = htmlLots;
+      }
+
+      function addManualItemRow() {
+        var html = '<div class="form-row manual-item-row"><input type="text" class="manual-desc" placeholder="Item Description"><input type="number" class="manual-cost" placeholder="Cost ($)" step="0.01" min="0"></div>';
+        document.getElementById("manualItemsList").insertAdjacentHTML('beforeend', html);
+      }
+
+      function submitPOForm(event) {
+        event.preventDefault();
+        var selectedLot = document.getElementById("poLotSelect").value;
+        var selectedTrade = document.getElementById("poTradeSelect").value;
+        var scope = document.getElementById("poScope").value;
+        var comments = document.getElementById("poComments").value;
+        var initialStatus = document.getElementById("poInitialStatus").value;
+        
+        var manualItems = [];
+        var rows = document.getElementsByClassName("manual-item-row");
+        for(var r = 0; r < rows.length; r++) {
+            var desc = rows[r].querySelector(".manual-desc").value;
+            var cost = rows[r].querySelector(".manual-cost").value;
+            if(!desc || !cost) { alert("Please fill out all manual item descriptions and costs."); return; }
+            manualItems.push({desc: desc, cost: parseFloat(cost)});
+        }
+        if(manualItems.length === 0) { alert("Please add at least one manual item."); return; }
+
+        document.getElementById("poStatusMsg").innerText = "Generating PO...";
+        google.script.run.withSuccessHandler(function(res) {
+          if(res.indexOf("Error") > -1) { alert(res); }
+          else {
+            document.getElementById("poStatusMsg").innerText = "PO Generated Successfully!"; 
+            document.getElementById("poForm").reset();
+            setTimeout(function() { document.getElementById("poStatusMsg").innerText = ""; }, 3000); 
+            loadPOTable();
+          }
+        }).generatePurchaseOrder(selectedLot, selectedTrade, scope, comments, initialStatus, manualItems);
+      }
+
+      function loadPOTable() { google.script.run.withSuccessHandler(buildPOTable).getPOsData({}); }
+      function buildPOTable(data) {
+        if (!data || data.length === 0) return;
+        var headers = data[0];
+        
+        var tabHidden = currentUser.hiddenHeadings["PO_Directory"] || [];
+        var skipColIndices = [];
+        for (var h = 0; h < headers.length; h++) {
+          if (tabHidden.indexOf(String(headers[h]).trim().toLowerCase()) > -1) {
+            skipColIndices.push(h);
+          }
+        }
+
+        var html = "<table id='poTable'>";
+        for (var i = 0; i < data.length; i++) {
+          if(i > 0 && data[i][0] !== "Status" && currentUser.projects.indexOf(data[i][1]) === -1 && currentUser.projects.toLowerCase().indexOf("all") === -1) {
+            continue;
+          }
+
+          html += "<tr>";
+          for (var j = 0; j < data[i].length; j++) {
+            if (skipColIndices.indexOf(j) > -1) continue; 
+            var cellValue = data[i][j] ? data[i][j].toString() : ""; 
+            if (i === 0) html += "<th class='sort-header' onclick=\"sortTable('poTable', " + j + ")\">" + cellValue + "</th>"; 
+            else if(j === 6 && cellValue.indexOf("http") === 0) html += "<td><a href='" + cellValue + "' target='_blank' class='btn-folder'>View PDF</a></td>"; 
+            else html += "<td>" + cellValue + "</td>"; 
+          }
+          if (i === 0) html += "<th>Manage</th>"; 
+          else html += "<td><button class='btn-folder' onclick=\"openManageModal('" + data[i][2] + "')\">Manage</button></td>";
+          html += "</tr>";
+        }
+        document.getElementById("poTableContainer").innerHTML = html + "</table>";
+      }
+
+      function applyPOFilters() { 
+        var filterObj = {}; 
+        if (document.getElementById("filterPOProject").value !== "") filterObj["Project Name"] = document.getElementById("filterPOProject").value;
+        if (document.getElementById("filterPOTrade").value !== "") filterObj["Trade"] = document.getElementById("filterPOTrade").value;
+        if (document.getElementById("filterPOStatus").value !== "") filterObj["Status"] = document.getElementById("filterPOStatus").value;
+        
+        document.getElementById("poTableContainer").innerHTML = "<i>Filtering...</i>"; 
+        google.script.run.withSuccessHandler(buildPOTable).getPOsData(filterObj);
+      }
+      function clearPOFilters() { 
+        document.getElementById("filterPOProject").value = ""; 
+        document.getElementById("filterPOTrade").value = ""; 
+        document.getElementById("filterPOStatus").value = ""; 
+        loadPOTable(); 
+      }
+
+      function openManageModal(poNum) {
+        document.getElementById("manageModal").style.display = "block";
+        document.getElementById("modalTitle").innerText = "Manage PO: " + poNum;
+        document.getElementById("modalPoNum").value = poNum;
+        document.getElementById("statusUpdateMsg").innerText = "";
+      }
+      function saveStatus() {
+        var poNum = document.getElementById("modalPoNum").value;
+        var newStatus = document.getElementById("modalStatusSelect").value;
+        document.getElementById("statusUpdateMsg").innerText = "Saving...";
+        google.script.run.withSuccessHandler(function(res) {
+          document.getElementById("statusUpdateMsg").innerText = res;
+          setTimeout(function(){ document.getElementById("statusUpdateMsg").innerText = ""; }, 3000);
+          loadPOTable(); 
+        }).updatePOStatus(poNum, newStatus);
+      }
+      function closeModal() { document.getElementById("manageModal").style.display = "none"; }
+
+      window.onclick = function(event) {
+        if (event.target == document.getElementById("userSettingsModal")) document.getElementById("userSettingsModal").style.display = "none";
+        if (event.target == document.getElementById("manageModal")) document.getElementById("manageModal").style.display = "none"; 
+        if (event.target == document.getElementById("manageServiceModal")) document.getElementById("manageServiceModal").style.display = "none"; 
+        if (event.target == document.getElementById("rejectServiceModal")) document.getElementById("rejectServiceModal").style.display = "none"; 
+        if (event.target == document.getElementById("reportModal")) document.getElementById("reportModal").style.display = "none"; 
+        if (event.target == document.getElementById("eventModal")) document.getElementById("eventModal").style.display = "none"; 
+        if (event.target == document.getElementById("editHomeownerModal")) document.getElementById("editHomeownerModal").style.display = "none"; 
+      }
+
+      // --- SERVICE REQUESTS ---
+      function loadServiceTable() { 
+        document.getElementById("serviceTableContainer").innerHTML = "<i>Loading data...</i>"; 
+        google.script.run.withSuccessHandler(function(data) {
+          buildServiceFilters(data);
+          buildServiceTable(data);
+        }).getServiceRequestsData({}); 
+      }
+
+      function buildServiceFilters(data) {
+        var projects = [], lots = []; 
+        if (!data || data.length < 2) return; 
+        
+        for (var i = 1; i < data.length; i++) {
+            if (data[i][0] === "Status" || data[i][0] === "Error") continue; 
+            var proj = data[i][0], lot = data[i][2]; 
+            if (proj && projects.indexOf(proj) === -1) projects.push(proj); 
+            if (lot && lots.indexOf(lot) === -1) lots.push(lot);
+        }
+        
+        var allowedProjects = projects.filter(function(p) {
+          return currentUser.projects.indexOf(p) > -1 || currentUser.projects.toLowerCase().indexOf("all") > -1;
+        });
+
+        populateSelectHTML("filterServiceProject", allowedProjects.sort(), "All Projects"); 
+        populateSelectHTML("filterServiceLot", alphaNumSort(lots), "All Lots"); 
+      }
+
+      function buildServiceTable(data) {
+        if (!data || data.length === 0) return;
+        var html = "<table id='serviceTable'>";
+        
+        var headers = data[0];
+        var tabHidden = currentUser.hiddenHeadings["Service_Directory"] || [];
+        var skipCols = [];
+        
+        for (var h = 0; h < headers.length; h++) {
+          var headerName = String(headers[h]).toLowerCase().trim();
+          
+          if (tabHidden.indexOf(headerName) > -1) {
+            skipCols.push(h);
+          } else if (headerName.indexOf("style") > -1 || 
+              headerName.indexOf("option") > -1 ||
+              headerName.indexOf("schedule url") > -1 ||
+              headerName.indexOf("schedule status") > -1 ||
+              headerName.indexOf("last completed task") > -1) {
+            skipCols.push(h);
+          }
+        }
+
+        for (var i = 0; i < data.length; i++) {
+          if(i > 0 && data[i][0] !== "Status" && currentUser.projects.indexOf(data[i][0]) === -1 && currentUser.projects.toLowerCase().indexOf("all") === -1) {
+            continue;
+          }
+
+          html += "<tr>";
+          for (var j = 0; j < data[i].length; j++) {
+            if (skipCols.indexOf(j) > -1) continue; 
+
+            var cellValue = data[i][j] ? data[i][j].toString() : ""; 
+            var headerName = String(headers[j]).toLowerCase().trim();
+            
+            if (i === 0) {
+              var headerTxt = (j === 16 ? "Service Folder" : cellValue);
+              html += "<th class='sort-header' onclick=\"sortTable('serviceTable', " + j + ")\">" + headerTxt + "</th>"; 
+            } else {
+              
+              if (headerName === "status" && cellValue !== "") {
+                var badgeClass = "status-unreviewed";
+                if (cellValue === "Reviewed") badgeClass = "status-reviewed";
+                if (cellValue === "Assigned") badgeClass = "status-assigned";
+                if (cellValue === "Completed") badgeClass = "status-completed";
+                if (cellValue === "Approved") badgeClass = "status-approved";
+                html += "<td><span class='status-badge " + badgeClass + "'>" + cellValue + "</span></td>";
+              } 
+              else if (j === 13 && cellValue !== "") {
+                var dateLines = cellValue.split(/\n+/);
+                var displayDate = "<span style='font-weight:bold; color:#1c2d42;'>" + dateLines[0] + "</span>";
+                for (var d = 1; d < dateLines.length; d++) {
+                  displayDate += "<br><span style='color:#e74c3c; font-size:11px; font-weight:bold;'>" + dateLines[d] + "</span>";
+                }
+                html += "<td>" + displayDate + "</td>";
+              }
+              else if (j === 16 && cellValue.indexOf("http") === 0) {
+                html += "<td><a href='" + cellValue + "' target='_blank' class='btn-folder' style='background-color:#c6a87c; color:#1c2d42;'>Service Folder</a></td>";
+              } else if (cellValue.indexOf("http") === 0) {
+                html += "<td><a href='" + cellValue + "' target='_blank' class='btn-folder'>View Docs</a></td>";
+              } else {
+                html += "<td>" + cellValue + "</td>"; 
+              }
+            }
+          }
+          html += "</tr>";
+        }
+        document.getElementById("serviceTableContainer").innerHTML = html + "</table>";
+      }
+
+      function applyServiceFilters() { 
+        var filterObj = {}; 
+        if (document.getElementById("filterServiceProject").value !== "") filterObj["Project Name"] = document.getElementById("filterServiceProject").value;
+        if (document.getElementById("filterServiceLot").value !== "") filterObj["Lot #"] = document.getElementById("filterServiceLot").value;
+        
+        document.getElementById("serviceTableContainer").innerHTML = "<i>Filtering...</i>"; 
+        google.script.run.withSuccessHandler(buildServiceTable).getServiceRequestsData(filterObj);
+      }
+
+      function clearServiceFilters() { 
+        document.getElementById("filterServiceProject").value = ""; 
+        document.getElementById("filterServiceLot").value = ""; 
+        loadServiceTable(); 
+      }
+
+      // --- PHOTO UPLOAD LOGIC (BATCH PROCESSING) ---
+      function togglePhotoUploadMode() {
+        var mode = document.querySelector('input[name="uploadMode"]:checked').value;
+        if (mode === "manual") {
+          document.getElementById("manualPhotoContainer").style.display = "block";
+          document.getElementById("autoPhotoContainer").style.display = "none";
+        } else {
+          document.getElementById("manualPhotoContainer").style.display = "none";
+          document.getElementById("autoPhotoContainer").style.display = "block";
+        }
+      }
+
+      function filterPhotoLots() {
+        var selectedProject = document.getElementById("photoProjectSelect").value;
+        var lots = globalLotMap[selectedProject] || []; 
+        var htmlLots = "<option value='' disabled selected>Select Lot</option>";
+        for (var i = 0; i < lots.length; i++) { 
+          var safeLotVal = String(lots[i].value).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+          htmlLots += "<option value='" + safeLotVal + "'>" + lots[i].display + "</option>"; 
+        } 
+        document.getElementById("photoLotSelect").innerHTML = htmlLots;
+      }
+      
+      function fetchLotWarrantyMetadata() {
+        var lot = document.getElementById("photoLotSelect").value;
+        var formSelect = document.getElementById("photoFormType");
+        formSelect.innerHTML = "<option value='' disabled selected>Loading...</option>";
+        
+        google.script.run
+          .withSuccessHandler(function(data) {
+            if (data.error) {
+              alert(data.error);
+              formSelect.innerHTML = "<option value='' disabled>No data found</option>";
+              return;
+            }
+            globalWarrantyMetadata = data.forms;
+            var options = "<option value='' disabled selected>Select Form Type</option>";
+            for (var form in data.forms) {
+              options += "<option value='" + form + "'>" + form + "</option>";
+            }
+            formSelect.innerHTML = options;
+          })
+          .withFailureHandler(function(err) {
+            alert("Backend execution failed: " + err.message);
+            formSelect.innerHTML = "<option value='' disabled>Error loading</option>";
+          })
+          .getLotWarrantyMetadata(lot);
+      }
+
+      function updateItemDropdown() {
+        var formType = document.getElementById("photoFormType").value;
+        var items = globalWarrantyMetadata[formType] || [];
+        
+        var options = "<option value='' disabled selected>Select Item #</option>";
+        for (var i = 0; i < items.length; i++) {
+          options += "<option value='" + items[i] + "'>" + items[i] + "</option>";
+        }
+        
+        var selects = document.getElementsByClassName("photo-item-select");
+        for(var s=0; s<selects.length; s++) {
+           selects[s].innerHTML = options;
+        }
+      }
+
+      function addPhotoRow() {
+        var formType = document.getElementById("photoFormType").value;
+        var items = formType ? (globalWarrantyMetadata[formType] || []) : [];
+        var options = "<option value='' disabled selected>Select Item #</option>";
+        for (var i = 0; i < items.length; i++) {
+          options += "<option value='" + items[i] + "'>" + items[i] + "</option>";
+        }
+        
+        var row = document.createElement("div");
+        row.className = "form-row manual-photo-row";
+        row.innerHTML = '<select class="photo-item-select" style="flex: 1; max-width: 200px;">' + options + '</select>' +
+                        '<input type="file" class="photo-file-input" accept="image/*" multiple style="flex: 2;" title="Hold Ctrl/Cmd to select multiple images">' +
+                        '<button type="button" class="btn-delete" onclick="this.parentElement.remove()">X</button>';
+        document.getElementById("manualPhotoRows").appendChild(row);
+      }
+
+      function handlePhotoUpload(event) {
+        event.preventDefault();
+        var mode = document.querySelector('input[name="uploadMode"]:checked').value;
+        
+        var project = document.getElementById('photoProjectSelect').value;
+        var lotCombined = document.getElementById('photoLotSelect').value;
+        var formType = document.getElementById('photoFormType').value;
+        
+        var statusMsg = document.getElementById('photoStatusMsg');
+        var btn = document.getElementById('photoUploadBtn');
+        
+        var rawFileJobs = [];
+
+        if (mode === "manual") {
+            var rows = document.getElementsByClassName("manual-photo-row");
+            for (var r = 0; r < rows.length; r++) {
+                var select = rows[r].querySelector(".photo-item-select");
+                var input = rows[r].querySelector(".photo-file-input");
+                
+                if (select.value && input.files.length > 0) {
+                    for(var f=0; f < input.files.length; f++) {
+                        rawFileJobs.push({
+                            itemNum: select.value,
+                            fileObj: input.files[f]
+                        });
+                    }
+                }
+            }
+        } else {
+            var autoInput = document.getElementById("autoPhotoFiles");
+            if (autoInput.files.length > 0) {
+                for (var f = 0; f < autoInput.files.length; f++) {
+                    var file = autoInput.files[f];
+                    var m = file.name.match(/(?:item\s*[-_]?\s*(\d+))|(?:^(\d+))/i);
+                    var itemNum = m ? (m[1] || m[2]) : null;
+                    
+                    if (!itemNum) {
+                        alert("Could not detect Item Number for file: '" + file.name + "'.\nPlease rename it (e.g., 'item3.jpg') or use Manual Mode.");
+                        return;
+                    }
+                    rawFileJobs.push({
+                        itemNum: itemNum,
+                        fileObj: file
+                    });
+                }
+            }
+        }
+
+        if (rawFileJobs.length === 0) {
+            alert("Please select at least one file to upload.");
+            return;
+        }
+        
+        statusMsg.innerText = "Processing " + rawFileJobs.length + " photo(s)...";
+        btn.disabled = true;
+
+        var fileDataArray = [];
+        var filesProcessed = 0;
+
+        for (var i = 0; i < rawFileJobs.length; i++) {
+          (function(job) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+              fileDataArray.push({
+                itemNum: job.itemNum,
+                base64Data: e.target.result.split(',')[1],
+                fileName: job.fileObj.name,
+                mimeType: job.fileObj.type
+              });
+              filesProcessed++;
+              if (filesProcessed === rawFileJobs.length) {
+                statusMsg.innerText = "Uploading to Drive... Please wait.";
+                google.script.run.withSuccessHandler(function(response) {
+                  statusMsg.innerText = response;
+                  btn.disabled = false;
+                  
+                  var rows = document.getElementsByClassName("manual-photo-row");
+                  while(rows.length > 1) rows[1].remove(); 
+                  document.getElementById('photoUploadForm').reset();
+                  
+                  setTimeout(function() { statusMsg.innerText = ""; }, 5000);
+                }).uploadServicePhotosBatch(fileDataArray, project, lotCombined, formType);
+              }
+            };
+            reader.readAsDataURL(job.fileObj);
+          })(rawFileJobs[i]);
+        }
+      }
+      
+      // --- MANUAL WARRANTY ENTRY SUBMISSION WITH CASCADING DROPDOWNS ---
+      function updateMwPhaseDropdown() {
+        var proj = document.getElementById("mwProject").value;
+        var phases = globalLotHierarchy[proj] ? alphaNumSort(Object.keys(globalLotHierarchy[proj])) : [];
+        populateSelectHTML("mwPhase", phases, "Select Phase");
+        document.getElementById("mwLot").innerHTML = "<option value='' disabled selected>Select Phase First</option>";
+      }
+
+      function updateMwLotDropdown() {
+        var proj = document.getElementById("mwProject").value;
+        var phase = document.getElementById("mwPhase").value;
+        var lots = (globalLotHierarchy[proj] && globalLotHierarchy[proj][phase]) ? alphaNumSort(globalLotHierarchy[proj][phase]) : [];
+        populateSelectHTML("mwLot", lots, "Select Lot");
+      }
+
+      function handleManualEntry(event, statusId, formId) {
+        event.preventDefault();
+        var btn = event.target.querySelector('button[type="submit"]');
+        var statusMsg = document.getElementById(statusId);
+        statusMsg.innerText = "Processing submission...";
+        btn.disabled = true;
+
+        var formData = {
+          project: document.getElementById('mwProject').value,
+          phase: document.getElementById('mwPhase').value,
+          lot: document.getElementById('mwLot').value,
+          formType: document.getElementById('mwFormType').value,
+          location: document.getElementById('mwLocation').value,
+          roomArea: document.getElementById('mwRoomArea').value,
+          defectArea: document.getElementById('mwDefectArea').value,
+          description: document.getElementById('mwDescription').value,
+          photos: []
+        };
+
+        var photoInput = document.getElementById('mwPhotos');
+        if (photoInput && photoInput.files.length > 0) {
+          var filesProcessed = 0;
+          for (var i = 0; i < photoInput.files.length; i++) {
+            (function(file) {
+              var reader = new FileReader();
+              reader.onload = function(e) {
+                formData.photos.push({
+                  fileName: file.name,
+                  mimeType: file.type,
+                  base64: e.target.result.split(',')[1]
+                });
+                filesProcessed++;
+                if (filesProcessed === photoInput.files.length) {
+                   sendManualEntry(formData, statusId, formId, btn);
+                }
+              };
+              reader.readAsDataURL(file);
+            })(photoInput.files[i]);
+          }
+        } else {
+          sendManualEntry(formData, statusId, formId, btn);
+        }
+      }
+
+      function sendManualEntry(formData, statusId, formId, btn) {
+        var statusMsg = document.getElementById(statusId);
+        statusMsg.innerText = "Creating sheets, saving photos, and logging entry... (This may take a minute)";
+        google.script.run.withSuccessHandler(function(response) {
+          statusMsg.innerText = response;
+          btn.disabled = false;
+          if (response.indexOf("Error") === -1) {
+            document.getElementById(formId).reset();
+            loadServiceTable();
+          }
+          setTimeout(function() { statusMsg.innerText = ""; }, 5000);
+        }).addManualWarrantyItem(formData);
+      }
+
+      // --- WARRANTY DOCUMENT UPLOAD ---
+      function handleWarrantyUpload(event) {
+        event.preventDefault();
+        var fileInput = document.getElementById('warrantyFile');
+        var caseId = document.getElementById('warrantyCaseId').value;
+        var statusMsg = document.getElementById('uploadStatusMsg');
+        var btn = document.getElementById('uploadBtn');
+        
+        if (fileInput.files.length === 0) return;
+        var file = fileInput.files[0];
+        
+        statusMsg.innerText = "Reading file...";
+        btn.disabled = true;
+
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          var base64Data = e.target.result.split(',')[1];
+          statusMsg.innerText = "Uploading & Processing... (This may take a minute)";
+          
+          google.script.run.withSuccessHandler(function(response) {
+            statusMsg.innerText = response;
+            btn.disabled = false;
+            fileInput.value = ""; 
+            document.getElementById('warrantyCaseId').value = ""; 
+            if(response.indexOf("Error") === -1) {
+              loadServiceTable(); 
+            }
+            setTimeout(function() { statusMsg.innerText = ""; }, 5000);
+          }).processWarrantyDocument(base64Data, file.name, file.type, caseId);
+        };
+        reader.readAsDataURL(file);
+      }
+
+      // --- SERVICE ORDERS MASTER LOGIC ---
+      function loadServiceOrderFilters() {
+        updateServiceOrderDropdowns('init');
+      }
+
+      function updateServiceOrderDropdowns(changedId) {
+        var currentFilters = {
+          project: document.getElementById("soProject").value,
+          phase: document.getElementById("soPhase").value,
+          lot: document.getElementById("soLot").value,
+          form: document.getElementById("soForm").value
+        };
+
+        if (changedId === 'soProject') {
+          currentFilters.phase = "";
+          currentFilters.lot = "";
+          currentFilters.form = "";
+        } else if (changedId === 'soPhase') {
+          currentFilters.lot = "";
+          currentFilters.form = "";
+        } else if (changedId === 'soLot') {
+          currentFilters.form = "";
+        }
+
+        google.script.run
+          .withSuccessHandler(function(res) {
+            if (res.error) {
+              console.error("Server returned an error:", res.error);
+              alert("Error loading filters: " + res.error);
+              return;
+            }
+            
+            var allowedProjects = res.projects.filter(function(p) {
+              return currentUser.projects.indexOf(p) > -1 || currentUser.projects.toLowerCase().indexOf("all") > -1;
+            });
+
+            if (changedId === 'init' || changedId === 'soProject') {
+              populateSelectHTML("soProject", alphaNumSort(allowedProjects), "All Projects");
+              document.getElementById("soProject").value = currentFilters.project;
+            }
+
+            populateSelectHTML("soPhase", alphaNumSort(res.phases), "All Phases");
+            document.getElementById("soPhase").value = currentFilters.phase;
+
+            populateSelectHTML("soLot", alphaNumSort(res.lots), "All Lots");
+            document.getElementById("soLot").value = currentFilters.lot;
+
+            populateSelectHTML("soForm", alphaNumSort(res.forms), "All Forms");
+            document.getElementById("soForm").value = currentFilters.form;
+
+            populateSelectHTML("soTrade", alphaNumSort(res.trades), "All Trades");
+            populateSelectHTML("soStatus", alphaNumSort(res.statuses), "All Statuses");
+          })
+          .withFailureHandler(function(err) {
+            alert("Script Failed to Load Data: " + err.message);
+          })
+          .getServiceOrderFilterOptions(currentFilters);
+      }
+
+      function searchServiceOrders() {
+        var filters = {
+          project: document.getElementById("soProject").value,
+          phase: document.getElementById("soPhase").value,
+          lot: document.getElementById("soLot").value,
+          form: document.getElementById("soForm").value,
+          itemNum: document.getElementById("soItem").value,
+          trade: document.getElementById("soTrade").value,
+          status: document.getElementById("soStatus").value
+        };
+        
+        document.getElementById("serviceOrdersTableContainer").innerHTML = "<div style='padding: 20px;'><i>Searching Database...</i></div>";
+        google.script.run.withSuccessHandler(buildServiceOrdersTable).getFilteredServiceOrders(filters);
+      }
+
+      function clearServiceOrderFilters() {
+        document.getElementById("soProject").value = "";
+        document.getElementById("soPhase").value = "";
+        document.getElementById("soLot").value = "";
+        document.getElementById("soForm").value = "";
+        document.getElementById("soItem").value = "";
+        document.getElementById("soTrade").value = "";
+        document.getElementById("soStatus").value = "";
+        document.getElementById("serviceOrdersTableContainer").innerHTML = "<div style='padding: 20px; color: #666; font-style: italic;'>Please select your filters and click Search to populate the service items.</div>";
+        updateServiceOrderDropdowns('init');
+      }
+
+      function buildServiceOrdersTable(data) {
+        if (!data || data.length === 0) return;
+        
+        var headers = data[0];
+        var tabHidden = currentUser.hiddenHeadings["Service_Orders"] || [];
+        var skipColIndices = [];
+        if (currentUser && currentUser.hiddenHeadings) {
+          for (var h = 0; h < headers.length; h++) {
+            if (tabHidden.indexOf(String(headers[h]).trim().toLowerCase()) > -1) {
+              skipColIndices.push(h);
+            }
+          }
+        }
+
+        var html = "<table id='serviceOrdersTable'>";
+        for (var i = 0; i < data.length; i++) {
+          
+          if(i > 0 && data[i][0] !== "Status" && currentUser.projects.indexOf(data[i][1]) === -1 && currentUser.projects.toLowerCase().indexOf("all") === -1) {
+            continue;
+          }
+
+          html += "<tr>";
+          for (var j = 0; j < data[i].length; j++) {
+            if (skipColIndices.indexOf(j) > -1) continue; 
+            
+            var cellValue = data[i][j] ? data[i][j].toString() : ""; 
+            var headerName = String(headers[j]).toLowerCase().trim();
+            
+            if (i === 0) {
+              html += "<th class='sort-header' onclick=\"sortTable('serviceOrdersTable', " + j + ")\">" + cellValue + "</th>"; 
+            } else {
+              
+              if (headerName === "status" && cellValue !== "") {
+                var badgeClass = "status-unreviewed";
+                if (cellValue === "Reviewed") badgeClass = "status-reviewed";
+                if (cellValue === "Assigned") badgeClass = "status-assigned";
+                if (cellValue === "Completed") badgeClass = "status-completed";
+                if (cellValue === "Approved") badgeClass = "status-approved";
+                html += "<td><span class='status-badge " + badgeClass + "'>" + cellValue + "</span></td>";
+              } 
+              else if (j === 13 && cellValue !== "") {
+                var dateLines = cellValue.split(/\n+/);
+                var displayDate = "<span style='font-weight:bold; color:#1c2d42;'>" + dateLines[0] + "</span>";
+                for (var d = 1; d < dateLines.length; d++) {
+                  displayDate += "<br><span style='color:#e74c3c; font-size:11px; font-weight:bold;'>" + dateLines[d] + "</span>";
+                }
+                html += "<td>" + displayDate + "</td>";
+              }
+              else if (j === 14 && cellValue.indexOf("http") > -1) {
+                var links = cellValue.split(/\n+/);
+                var btnHtml = "";
+                var pCount = 1;
+                for (var l = 0; l < links.length; l++) {
+                  var cleanLink = links[l].replace("Contractor Photo: ", "").trim();
+                  if (cleanLink.indexOf("http") === 0) {
+                    btnHtml += "<a href='" + cleanLink + "' target='_blank' class='btn-folder' style='margin-bottom:4px; display:inline-block;'>View Photo " + pCount + "</a><br>";
+                    pCount++;
+                  }
+                }
+                if(btnHtml === "") btnHtml = cellValue; 
+                html += "<td>" + btnHtml + "</td>";
+              } else {
+                html += "<td>" + cellValue + "</td>"; 
+              }
+            }
+          }
+          if (i === 0) {
+            html += "<th>Manage</th>";
+          } else {
+            var safeProj = String(data[i][1]).replace(/'/g, "\\'");
+            var safePhase = String(data[i][2]).replace(/'/g, "\\'");
+            var safeLot = String(data[i][3]).replace(/'/g, "\\'");
+            var safeForm = String(data[i][4]).replace(/'/g, "\\'");
+            var safeItem = String(data[i][5]).replace(/'/g, "\\'");
+            var safeTrade = String(data[i][11]).replace(/'/g, "\\'");
+            var safeSched = String(data[i][13]).replace(/'/g, "\\'").replace(/\n/g, "\\n").replace(/\r/g, "");
+            var safeWarr = String(data[i][15]).replace(/'/g, "\\'");
+            var safeStatus = String(data[i][16]).replace(/'/g, "\\'");
+            html += "<td><button class='btn-folder' style='background-color:#647b8c;' onclick=\"openManageServiceModal('" + safeProj + "', '" + safePhase + "', '" + safeLot + "', '" + safeForm + "', '" + safeItem + "', '" + safeTrade + "', '" + safeSched + "', '" + safeWarr + "', '" + safeStatus + "')\">Manage</button></td>";
+          }
+          html += "</tr>";
+        }
+        document.getElementById("serviceOrdersTableContainer").innerHTML = html + "</table>";
+      }
+
+      function triggerMasterSync() {
+        var btn = document.getElementById("btnSync");
+        btn.innerText = "Syncing... (This takes a moment)";
+        btn.disabled = true;
+        
+        google.script.run.withSuccessHandler(function(response) {
+          alert(response);
+          btn.innerText = "Sync Database";
+          btn.disabled = false;
+          loadServiceOrderFilters(); 
+        }).syncServiceItemsToMaster();
+      }
+
+      // --- PRINT REPORT MODAL LOGIC ---
+      function openReportModal() {
+        document.getElementById("reportModal").style.display = "block";
+        document.getElementById("repProject").innerHTML = document.getElementById("soProject").innerHTML;
+        document.getElementById("repPhase").innerHTML = document.getElementById("soPhase").innerHTML;
+        document.getElementById("repLot").innerHTML = document.getElementById("soLot").innerHTML;
+        document.getElementById("repTrade").innerHTML = document.getElementById("soTrade").innerHTML;
+        document.getElementById("repStatus").innerHTML = document.getElementById("soStatus").innerHTML;
+        
+        document.getElementById("repProject").value = document.getElementById("soProject").value;
+        document.getElementById("repPhase").value = document.getElementById("soPhase").value;
+        document.getElementById("repLot").value = document.getElementById("soLot").value;
+        document.getElementById("repTrade").value = document.getElementById("soTrade").value;
+        document.getElementById("repStatus").value = document.getElementById("soStatus").value;
+        
+        document.getElementById("reportStatusMsg").innerText = "";
+      }
+      
+      function closeReportModal() { document.getElementById("reportModal").style.display = "none"; }
+      
+      function generateReport() {
+        var filters = {
+          project: document.getElementById("repProject").value,
+          phase: document.getElementById("repPhase").value,
+          lot: document.getElementById("repLot").value,
+          trade: document.getElementById("repTrade").value,
+          status: document.getElementById("repStatus").value,
+          form: "", itemNum: ""
+        };
+        
+        var checkboxes = document.querySelectorAll("#reportColumnsGroup input[type='checkbox']:checked");
+        var selectedCols = [];
+        for (var i = 0; i < checkboxes.length; i++) {
+          selectedCols.push(checkboxes[i].value.toLowerCase());
+        }
+        
+        if (selectedCols.length === 0) {
+            alert("Please select at least one column for the report."); return;
+        }
+        
+        document.getElementById("reportStatusMsg").style.color = "#4a6b5d";
+        document.getElementById("reportStatusMsg").innerText = "Generating PDF... This may take a minute.";
+        document.getElementById("btnGenerateReport").disabled = true;
+        
+        google.script.run.withSuccessHandler(function(url) {
+            document.getElementById("btnGenerateReport").disabled = false;
+            if (url.indexOf("http") === 0) {
+                document.getElementById("reportStatusMsg").innerHTML = "✅ Success! <a href='" + url + "' target='_blank' style='color:#1c2d42; font-weight:bold;'>Click here to view your report</a>.";
+            } else {
+                document.getElementById("reportStatusMsg").style.color = "#8b3a3a";
+                document.getElementById("reportStatusMsg").innerText = url;
+            }
+        }).generateServiceReportPDF(filters, selectedCols);
+      }
+
+      // --- SERVICE ORDERS STATUS MODAL ---
+      function openManageServiceModal(project, phase, lot, form, itemNum, trade, currentSched, currentWarr, currentStatus) {
+        document.getElementById("manageServiceModal").style.display = "block";
+        document.getElementById("serviceModalTitle").innerText = "Manage Service Item #" + itemNum;
+        
+        document.getElementById("serviceModalProject").value = project;
+        document.getElementById("serviceModalPhase").value = phase;
+        document.getElementById("serviceModalLot").value = lot;
+        document.getElementById("serviceModalForm").value = form;
+        document.getElementById("serviceModalItem").value = itemNum;
+        document.getElementById("serviceModalTrade").value = trade;
+        
+        document.getElementById("serviceModalCurrentStatus").value = currentStatus || "Unreviewed";
+        
+        var parsedSched = currentSched ? currentSched.split('\n')[0].trim() : "";
+        if (parsedSched !== "" && parsedSched.indexOf('[') === -1) {
+            var d = new Date(parsedSched);
+            if (!isNaN(d.getTime())) {
+                var yyyy = d.getFullYear();
+                var mm = ("0" + (d.getMonth() + 1)).slice(-2);
+                var dd = ("0" + d.getDate()).slice(-2);
+                document.getElementById("serviceModalSchedDate").value = yyyy + "-" + mm + "-" + dd;
+            } else {
+                document.getElementById("serviceModalSchedDate").value = parsedSched; 
+            }
+        } else {
+            document.getElementById("serviceModalSchedDate").value = "";
+        }
+        
+        document.getElementById("serviceModalOriginalSchedDate").value = document.getElementById("serviceModalSchedDate").value;
+
+        document.getElementById("serviceModalWarrantedSelect").value = currentWarr || "";
+        
+        var selectObj = document.getElementById("serviceModalStatusSelect");
+        if(currentStatus && currentStatus !== "") {
+          selectObj.value = currentStatus;
+        } else {
+          selectObj.value = "Unreviewed";
+        }
+        
+        document.getElementById("serviceStatusUpdateMsg").innerText = "";
+      }
+
+      function closeManageServiceModal() { 
+        document.getElementById("manageServiceModal").style.display = "none"; 
+      }
+      
+      function closeRejectModal() { 
+        document.getElementById("rejectServiceModal").style.display = "none"; 
+      }
+
+      function saveServiceStatus() {
+        var currentStatus = document.getElementById("serviceModalCurrentStatus").value;
+        var newStatus = document.getElementById("serviceModalStatusSelect").value;
+        
+        if (currentStatus === "Completed" && newStatus === "Assigned") {
+          document.getElementById("rejectReasonText").value = "";
+          document.getElementById("rejectPhotoFile").value = "";
+          document.getElementById("btnConfirmReject").innerText = "Reject & Email Trade";
+          document.getElementById("btnConfirmReject").disabled = false;
+          document.getElementById("rejectServiceModal").style.display = "block";
+          return; 
+        }
+        
+        executeServiceStatusSave(null, null);
+      }
+
+      function confirmRejectService() {
+        var reason = document.getElementById("rejectReasonText").value;
+        if (reason.trim() === "") {
+            alert("A reason is required to reject a completed item.");
+            return;
+        }
+        
+        var fileInput = document.getElementById("rejectPhotoFile");
+        var btn = document.getElementById("btnConfirmReject");
+        btn.innerText = "Processing File & Sending...";
+        btn.disabled = true;
+
+        if (fileInput.files.length > 0) {
+            var file = fileInput.files[0];
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var fileObj = {
+                    fileName: file.name,
+                    mimeType: file.type,
+                    base64: e.target.result.split(',')[1]
+                };
+                closeRejectModal();
+                executeServiceStatusSave(reason, fileObj);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            closeRejectModal();
+            executeServiceStatusSave(reason, null);
+        }
+      }
+
+      function executeServiceStatusSave(rejectionReason, rejectionFile) {
+        var project = document.getElementById("serviceModalProject").value;
+        var phase = document.getElementById("serviceModalPhase").value;
+        var lot = document.getElementById("serviceModalLot").value;
+        var form = document.getElementById("serviceModalForm").value;
+        var itemNum = document.getElementById("serviceModalItem").value;
+        var trade = document.getElementById("serviceModalTrade").value;
+        
+        var newSched = document.getElementById("serviceModalSchedDate").value;
+        var origSched = document.getElementById("serviceModalOriginalSchedDate").value;
+        var newWarr = document.getElementById("serviceModalWarrantedSelect").value;
+        var newStatus = document.getElementById("serviceModalStatusSelect").value;
+        
+        var rescheduleReason = "";
+        if (newSched !== origSched && origSched !== "") {
+            rescheduleReason = prompt("The scheduled date has changed.\n\nPlease provide a reason for the reschedule:");
+            if (rescheduleReason === null) return; 
+            if (rescheduleReason.trim() === "") {
+                alert("A reason is required to reschedule an item.");
+                return;
+            }
+        } else if (newSched === "" && origSched !== "") {
+            rescheduleReason = prompt("The scheduled date is being removed.\n\nPlease provide a reason:");
+            if (rescheduleReason === null) return;
+        }
+
+        document.getElementById("serviceStatusUpdateMsg").innerText = "Updating Master Database and Lot Spreadsheet...";
+        
+        google.script.run.withSuccessHandler(function(res) {
+          document.getElementById("serviceStatusUpdateMsg").innerText = res;
+          setTimeout(function(){ 
+            closeManageServiceModal(); 
+            searchServiceOrders(); 
+            loadScheduleData(); 
+          }, 3000);
+        }).updateServiceItemDetails(project, phase, lot, form, itemNum, trade, newStatus, newSched, newWarr, rejectionReason, rejectionFile, rescheduleReason);
+      }
+
+      // --- FLOATING AI CHAT CLIENT-SIDE LOGIC ---
+      function toggleAiChat() {
+        var win = document.getElementById("aiChatWindow");
+        if (win.style.display === "none" || win.style.display === "") {
+          win.style.display = "flex";
+          document.getElementById("aiChatInput").focus();
+        } else {
+          win.style.display = "none";
+        }
+      }
+
+      function handleAiKeyPress(e) {
+        if (e.key === 'Enter') {
+          sendAiMessage();
+        }
+      }
+
+      function sendAiMessage() {
+        var input = document.getElementById("aiChatInput");
+        var text = input.value.trim();
+        if (text === "") return;
+
+        var msgContainer = document.getElementById("aiChatMessages");
+        var userDiv = document.createElement("div");
+        userDiv.className = "ai-msg ai-msg-user";
+        userDiv.innerText = text;
+        msgContainer.appendChild(userDiv);
+        
+        input.value = "";
+        
+        var botLoadingDiv = document.createElement("div");
+        botLoadingDiv.className = "ai-msg ai-msg-bot";
+        botLoadingDiv.id = "aiLoadingStatus";
+        botLoadingDiv.innerHTML = "<i>Analyzing repository, schedules, and docs...</i>";
+        msgContainer.appendChild(botLoadingDiv);
+        msgContainer.scrollTop = msgContainer.scrollHeight;
+
+        google.script.run
+          .withSuccessHandler(function(aiResponse) {
+            var loader = document.getElementById("aiLoadingStatus");
+            if(loader) loader.remove();
+            
+            var botDiv = document.createElement("div");
+            botDiv.className = "ai-msg ai-msg-bot";
+            botDiv.innerText = aiResponse;
+            msgContainer.appendChild(botDiv);
+            msgContainer.scrollTop = msgContainer.scrollHeight;
+          })
+          .withFailureHandler(function(err) {
+            var loader = document.getElementById("aiLoadingStatus");
+            if(loader) loader.remove();
+            
+            var errDiv = document.createElement("div");
+            errDiv.className = "ai-msg ai-msg-system";
+            errDiv.innerText = "Fatal Callback Interruption: " + err.message;
+            msgContainer.appendChild(errDiv);
+            msgContainer.scrollTop = msgContainer.scrollHeight;
+          })
+          .handleAiChat(text);
+      }
+    </script>
+  </body>
+</html>
