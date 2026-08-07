@@ -13,6 +13,19 @@ const WARRANTY_TEMPLATE_ID = '1loBscI38L9vtywXvl65tohceruLTCF2jo6A1Px0ppxc';
 function doGet(e) {
   setupDailyTrigger();
   if (e && e.parameter && e.parameter.action === 'homeownerFeedback') {
+    var currentStatus = getServiceItemStatus(
+      e.parameter.project,
+      e.parameter.phase,
+      e.parameter.lot,
+      e.parameter.formName,
+      e.parameter.itemNum,
+      e.parameter.trade
+    );
+
+    if (currentStatus !== "Approved") {
+      return showSingleResponseWarning();
+    }
+
     if (e.parameter.agree === 'false') {
       var template = HtmlService.createTemplateFromFile('DisagreeForm');
       template.project = e.parameter.project;
@@ -295,6 +308,41 @@ function getOrCreateFolder(parentFolder, folderName) {
   return parentFolder.createFolder(folderName);
 }
 
+function getServiceItemStatus(project, phase, lot, formName, itemNum, trade) {
+  try {
+    var masterSS = SpreadsheetApp.openById(SERVICE_MASTER_ID);
+    var masterSheet = masterSS.getSheets()[0];
+    var mData = masterSheet.getDataRange().getValues();
+
+    var cProj = cleanText(project), cPhase = cleanText(phase), cLot = cleanText(lot), cForm = cleanText(formName), cItem = cleanText(itemNum), cTrade = cleanText(trade);
+
+    for (var i = 1; i < mData.length; i++) {
+      if (cleanText(mData[i][1]) === cProj && cleanText(mData[i][2]) === cPhase && cleanText(mData[i][3]) === cLot && cleanText(mData[i][4]) === cForm && cleanText(mData[i][5]) === cItem && cleanText(mData[i][11]) === cTrade) {
+         return mData[i][16];
+      }
+    }
+  } catch(e) {
+    Logger.log("Error getting status: " + e.message);
+  }
+  return "";
+}
+
+function showSingleResponseWarning() {
+  var html = "<html><head><style>" +
+             "body { font-family: sans-serif; background-color: #f8f9fc; color: #333; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; } " +
+             ".container { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 500px; text-align: center; } " +
+             "h2 { color: #8b3a3a; margin-top: 0; } " +
+             "p { font-size: 16px; line-height: 1.5; color: #666; } " +
+             "</style></head><body>" +
+             "<div class='container'>" +
+             "<h2>Georgian Communities</h2>" +
+             "<p><strong>Response Already Recorded</strong></p>" +
+             "<p>You have already submitted a response for this service item. Each request can only be answered once.</p>" +
+             "</div>" +
+             "</body></html>";
+  return HtmlService.createHtmlOutput(html).setTitle("Response Already Recorded - Georgian Communities");
+}
+
 function submitHomeownerDisagreement(formData) {
   try {
     var project = formData.project;
@@ -305,6 +353,11 @@ function submitHomeownerDisagreement(formData) {
     var trade = formData.trade;
     var reason = formData.reason;
     var photos = formData.photos || [];
+
+    var currentStatus = getServiceItemStatus(project, phase, lot, formName, itemNum, trade);
+    if (currentStatus !== "Approved") {
+      return "Error: You have already submitted a response for this service item. Each request can only be answered once.";
+    }
 
     var clickDateTimeStr = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm:ss");
     var logMessage = "Homeowner disagreed that the item has been completed. Date/Time: " + clickDateTimeStr + "\nReason: " + reason;
@@ -555,6 +608,11 @@ function getServiceCoordinatorEmails(project) {
 }
 
 function updateHomeownerResponse(project, phase, lot, formName, itemNum, trade, agree) {
+  var currentStatus = getServiceItemStatus(project, phase, lot, formName, itemNum, trade);
+  if (currentStatus !== "Approved") {
+    return showSingleResponseWarning();
+  }
+
   var isAgree = (agree === 'true');
   var newStatus = isAgree ? "Closed" : "Repair Rejected";
 
