@@ -39,6 +39,7 @@
       
       th { background-color: #1c2d42; color: white; font-weight: 600; cursor: pointer; user-select: none; transition: background-color 0.2s; }
       th:hover { background-color: #2b4566; }
+      th:focus-visible { outline: 2px solid #c6a87c; outline-offset: -2px; }
       
       tr:nth-child(even) { background-color: #fcfcfc; }
       
@@ -55,8 +56,9 @@
       
       .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(28, 45, 66, 0.6); }
       .modal-content { background-color: #fcfcfc; margin: 5% auto; padding: 25px; border: none; width: 90%; max-width: 500px; border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto;}
-      .close { color: #888; float: right; font-size: 28px; font-weight: bold; cursor: pointer; margin-top:-10px;}
+      .close { color: #888; float: right; font-size: 28px; font-weight: bold; cursor: pointer; margin-top:-10px; background: none; border: none; padding: 0; font-family: inherit; }
       .close:hover, .close:focus { color: #1c2d42; text-decoration: none; }
+      .close:focus-visible { outline: 2px solid #1c2d42; outline-offset: 2px; }
 
       .checkbox-group { border: 1px solid #ccc; border-radius: 3px; padding: 8px; background: white; max-height: 120px; overflow-y: auto; font-size: 13px; line-height: 1.8; display: grid; grid-template-columns: 1fr 1fr; }
       .checkbox-group label { display: block; cursor: pointer; margin-bottom: 3px; }
@@ -87,11 +89,11 @@
       <p style="color:#666; font-size:14px; margin-bottom:20px;">Contractor Portal Login</p>
       <form onsubmit="handlePortalLogin(event)">
         <div class="form-row">
-          <label style="font-weight:bold; font-size:13px;">Email Address</label>
+          <label for="loginEmail" style="font-weight:bold; font-size:13px;">Email Address</label>
           <input type="email" id="loginEmail" placeholder="name@company.com" required>
         </div>
         <div class="form-row">
-          <label style="font-weight:bold; font-size:13px;">Portal Passcode</label>
+          <label for="loginPasscode" style="font-weight:bold; font-size:13px;">Portal Passcode</label>
           <input type="password" id="loginPasscode" placeholder="••••••••" required>
         </div>
         <button type="submit" class="btn-submit">Access My Portal</button>
@@ -191,7 +193,7 @@
     <!-- Completion Modal Form -->
     <div id="completionModal" class="modal">
       <div class="modal-content">
-        <span class="close" onclick="closeCompletionModal()">x</span>
+        <button type="button" class="close" onclick="closeCompletionModal()" aria-label="Close">&times;</button>
         <h3 id="completionTitle" style="margin-top:0;">Complete Service Item</h3>
         <form id="completionForm" onsubmit="handleCompletionSubmit(event)">
           <div class="form-row">
@@ -216,7 +218,7 @@
     <!-- PRINT REPORT MODAL -->
     <div id="reportModal" class="modal">
       <div class="modal-content" style="max-width: 600px;">
-        <span class="close" onclick="closeReportModal()">x</span>
+        <button type="button" class="close" onclick="closeReportModal()" aria-label="Close">&times;</button>
         <h3 style="margin-top:0;">Generate Service Report</h3>
         
         <h4 style="margin-bottom:5px;">1. Report Filters</h4>
@@ -253,7 +255,7 @@
     <!-- SCHEDULE EVENT MODAL -->
     <div id="eventModal" class="modal">
       <div class="modal-content">
-        <span class="close" onclick="closeEventModal()">x</span>
+        <button type="button" class="close" onclick="closeEventModal()" aria-label="Close">&times;</button>
         <h3 id="eventModalTitle" style="margin-top:0; color:#1c2d42;">Task Details</h3>
         <hr style="border:0; border-top:1px solid #eee; margin-bottom:15px;">
         <div id="eventModalBody" style="line-height: 1.8; font-size: 14px;"></div>
@@ -617,7 +619,7 @@ events.push(eventObj);
       }
 
       function renderServiceTable(items) {
-          var sHtml = "<table><tr><th onclick='sortTable(this)'>Project</th><th onclick='sortTable(this)'>Phase</th><th onclick='sortTable(this)'>Lot #</th><th onclick='sortTable(this)'>Form Type</th><th onclick='sortTable(this)'>Item #</th><th onclick='sortTable(this)'>Location</th><th onclick='sortTable(this)'>Defect Area</th><th onclick='sortTable(this)'>Description</th><th onclick='sortTable(this)'>Additional Information</th><th onclick='sortTable(this)'>Scheduled Date</th><th onclick='sortTable(this)'>Photo Link</th><th>Status</th></tr>";
+          var sHtml = "<table><tr><th tabindex='0' role='columnheader' aria-label='Sort by Project' onclick='sortTable(this)' onkeydown='if(event.key===\"Enter\"||event.key===\" \"){event.preventDefault();sortTable(this)}'>Project</th><th tabindex='0' role='columnheader' aria-label='Sort by Phase' onclick='sortTable(this)' onkeydown='if(event.key===\"Enter\"||event.key===\" \"){event.preventDefault();sortTable(this)}'>Phase</th><th tabindex='0' role='columnheader' aria-label='Sort by Lot #' onclick='sortTable(this)' onkeydown='if(event.key===\"Enter\"||event.key===\" \"){event.preventDefault();sortTable(this)}'>Lot #</th><th tabindex='0' role='columnheader' aria-label='Sort by Form Type' onclick='sortTable(this)' onkeydown='if(event.key===\"Enter\"||event.key===\" \"){event.preventDefault();sortTable(this)}'>Form Type</th><th tabindex='0' role='columnheader' aria-label='Sort by Item #' onclick='sortTable(this)' onkeydown='if(event.key===\"Enter\"||event.key===\" \"){event.preventDefault();sortTable(this)}'>Item #</th><th tabindex='0' role='columnheader' aria-label='Sort by Location' onclick='sortTable(this)' onkeydown='if(event.key===\"Enter\"||event.key===\" \"){event.preventDefault();sortTable(this)}'>Location</th><th tabindex='0' role='columnheader' aria-label='Sort by Defect Area' onclick='sortTable(this)' onkeydown='if(event.key===\"Enter\"||event.key===\" \"){event.preventDefault();sortTable(this)}'>Defect Area</th><th tabindex='0' role='columnheader' aria-label='Sort by Description' onclick='sortTable(this)' onkeydown='if(event.key===\"Enter\"||event.key===\" \"){event.preventDefault();sortTable(this)}'>Description</th><th tabindex='0' role='columnheader' aria-label='Sort by Additional Information' onclick='sortTable(this)' onkeydown='if(event.key===\"Enter\"||event.key===\" \"){event.preventDefault();sortTable(this)}'>Additional Information</th><th tabindex='0' role='columnheader' aria-label='Sort by Scheduled Date' onclick='sortTable(this)' onkeydown='if(event.key===\"Enter\"||event.key===\" \"){event.preventDefault();sortTable(this)}'>Scheduled Date</th><th tabindex='0' role='columnheader' aria-label='Sort by Photo Link' onclick='sortTable(this)' onkeydown='if(event.key===\"Enter\"||event.key===\" \"){event.preventDefault();sortTable(this)}'>Photo Link</th><th>Status</th></tr>";
           
           var serviceItems = items ? items.filter(function(i) {
               return i.formType !== "Construction Schedule";
@@ -693,7 +695,7 @@ events.push(eventObj);
             var maxCols = lots[i].length > 12 ? 12 : lots[i].length;
             for (var j = 0; j < maxCols; j++) {
               if (i === 0) {
-                html += "<th onclick='sortTable(this)' title='Click to sort'>" + escapeHtml(lots[i][j]) + "</th>";
+                html += "<th tabindex='0' role='columnheader' aria-label='Sort by " + escapeHtml(lots[i][j]) + "' onclick='sortTable(this)' onkeydown='if(event.key===\"Enter\"||event.key===\" \"){event.preventDefault();sortTable(this)}' title='Click to sort'>" + escapeHtml(lots[i][j]) + "</th>";
               } else {
                 var safeLabel = String(headers[j]).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
                 var cellValue = String(lots[i][j]).trim();
@@ -703,9 +705,9 @@ events.push(eventObj);
             }
             
             if (i === 0) {
-              html += "<th onclick='sortTable(this)' title='Click to sort'>Schedule</th>";
-              html += "<th onclick='sortTable(this)' title='Click to sort'>Last Completed Task</th>";
-              html += "<th onclick='sortTable(this)' title='Click to sort'>Lot Folder</th>";
+              html += "<th tabindex='0' role='columnheader' aria-label='Sort by Schedule' onclick='sortTable(this)' onkeydown='if(event.key===\"Enter\"||event.key===\" \"){event.preventDefault();sortTable(this)}' title='Click to sort'>Schedule</th>";
+              html += "<th tabindex='0' role='columnheader' aria-label='Sort by Last Completed Task' onclick='sortTable(this)' onkeydown='if(event.key===\"Enter\"||event.key===\" \"){event.preventDefault();sortTable(this)}' title='Click to sort'>Last Completed Task</th>";
+              html += "<th tabindex='0' role='columnheader' aria-label='Sort by Lot Folder' onclick='sortTable(this)' onkeydown='if(event.key===\"Enter\"||event.key===\" \"){event.preventDefault();sortTable(this)}' title='Click to sort'>Lot Folder</th>";
             } else {
               var schedUrl = lots[i][13] || "";
               var schedStatus = lots[i][14] || "";
@@ -747,7 +749,7 @@ events.push(eventObj);
             for (var j = 0; j < pos[i].length; j++) {
               var val = pos[i][j];
               if (i === 0) {
-                html += "<th onclick='sortTable(this)' title='Click to sort'>" + escapeHtml(val) + "</th>";
+                html += "<th tabindex='0' role='columnheader' aria-label='Sort by " + escapeHtml(val) + "' onclick='sortTable(this)' onkeydown='if(event.key===\"Enter\"||event.key===\" \"){event.preventDefault();sortTable(this)}' title='Click to sort'>" + escapeHtml(val) + "</th>";
               } else {
                 var safeLabel = String(headers[j]).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
                 if (j === 6 && val.indexOf("http") === 0) {

@@ -33,6 +33,7 @@
       tr:nth-child(even) { background-color: #fcfcfc; }
       th.sort-header { cursor: pointer; user-select: none; transition: 0.2s; }
       th.sort-header:hover { background-color: #3b536b; }
+      th.sort-header:focus-visible { outline: 2px solid #c6a87c; outline-offset: -2px; }
       
       #tableContainer, #lotsTableContainer, #poTableContainer { overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
 
@@ -45,8 +46,9 @@
       
       .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(28, 45, 66, 0.6); }
       .modal-content { background-color: #fcfcfc; margin: 5% auto; padding: 25px; border: none; width: 90%; max-width: 500px; border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto;}
-      .close { color: #888; float: right; font-size: 28px; font-weight: bold; cursor: pointer; margin-top:-10px;}
+      .close { color: #888; float: right; font-size: 28px; font-weight: bold; cursor: pointer; margin-top:-10px; background: none; border: none; padding: 0; font-family: inherit; }
       .close:hover, .close:focus { color: #1c2d42; text-decoration: none; }
+      .close:focus-visible { outline: 2px solid #1c2d42; outline-offset: 2px; }
       .history-box { background: #f0f3f5; border: 1px solid #d1d8dc; padding: 12px; height: 120px; overflow-y: auto; margin-bottom: 15px; font-size: 13px; border-radius: 4px;}
 
       .settings-btn { position: absolute; top: 20px; right: 20px; background-color: #1c2d42; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; display: none; z-index: 100; }
@@ -56,13 +58,15 @@
       .checkbox-group label { display: block; cursor: pointer; margin-bottom: 3px; }
       .checkbox-group input { margin-right: 8px; }
 
-      .ai-chat-launcher { position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px; background-color: #c6a87c; color: #1c2d42; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 10000; transition: transform 0.2s; }
+      .ai-chat-launcher { position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px; background-color: #c6a87c; color: #1c2d42; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 10000; transition: transform 0.2s; border: none; padding: 0; font-family: inherit; }
       .ai-chat-launcher:hover { transform: scale(1.05); background-color: #bfa073; }
+      .ai-chat-launcher:focus-visible { outline: 3px solid #1c2d42; outline-offset: 3px; }
       
       .ai-chat-window { position: fixed; bottom: 95px; right: 25px; width: 360px; height: 480px; background: white; border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,0.25); display: none; flex-direction: column; z-index: 10000; overflow: hidden; border: 1px solid #dcdcdc; }
       .ai-chat-header { background-color: #1c2d42; color: white; padding: 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-      .ai-chat-close { cursor: pointer; font-size: 20px; font-weight: bold; line-height: 1; }
+      .ai-chat-close { cursor: pointer; font-size: 20px; font-weight: bold; line-height: 1; background: none; border: none; padding: 0; color: white; font-family: inherit; }
       .ai-chat-close:hover { color: #c6a87c; }
+      .ai-chat-close:focus-visible { outline: 2px solid #c6a87c; outline-offset: 2px; }
       
       .ai-chat-messages { flex: 1; padding: 15px; overflow-y: auto; background-color: #f8f9fc; display: flex; flex-direction: column; gap: 10px; font-size: 13px; }
       .ai-msg { padding: 10px 12px; border-radius: 8px; max-width: 85%; line-height: 1.4; word-break: break-word; }
@@ -106,8 +110,14 @@
         <h3 style="margin-top:0;">Welcome to Build Connect</h3>
         <p style="font-size:13px; color:#666;">Please log in to access the portal.</p>
         <form onsubmit="handleLogin(event)">
-          <input type="email" id="loginEmail" placeholder="Email Address" required style="width: 100%; margin-bottom: 10px; padding: 10px; box-sizing: border-box;">
-          <input type="password" id="loginPassword" placeholder="Password" required style="width: 100%; margin-bottom: 15px; padding: 10px; box-sizing: border-box;">
+          <div style="text-align: left; margin-bottom: 10px;">
+            <label for="loginEmail" style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 5px; color: #1c2d42;">Email Address <span style="color: red;">*</span></label>
+            <input type="email" id="loginEmail" placeholder="Email Address" required style="width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 3px;">
+          </div>
+          <div style="text-align: left; margin-bottom: 15px;">
+            <label for="loginPassword" style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 5px; color: #1c2d42;">Password <span style="color: red;">*</span></label>
+            <input type="password" id="loginPassword" placeholder="Password" required style="width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 3px;">
+          </div>
           <button type="submit" class="btn-submit" style="width: 100%; padding: 12px; font-size:16px;">Login</button>
           <span id="loginError" style="color: #8b3a3a; display: block; margin-top: 15px; font-weight: bold; font-size:13px;"></span>
         </form>
@@ -267,7 +277,7 @@
     <!-- MODALS -->
     <div id="userSettingsModal" class="modal">
       <div class="modal-content" style="max-width: 600px;">
-        <span class="close" onclick="closeUserSettingsModal()">&times;</span>
+        <button type="button" class="close" onclick="closeUserSettingsModal()" aria-label="Close">&times;</button>
         <h3 style="margin-top:0;">User Preferences</h3>
         <hr style="border:0; border-top:1px solid #eee; margin-bottom:15px;">
         <form onsubmit="saveUserSettings(event)">
@@ -341,7 +351,7 @@
 
     <div id="editContractorModal" class="modal">
       <div class="modal-content" style="max-width: 600px;">
-        <span class="close" onclick="closeEditContractorModal()">&times;</span>
+        <button type="button" class="close" onclick="closeEditContractorModal()" aria-label="Close">&times;</button>
         <h3 style="margin-top:0;">Edit Contractor</h3>
         <hr style="border:0; border-top:1px solid #eee; margin-bottom:15px;">
         <form id="editContractorForm" onsubmit="submitEditContractorForm(event)">
@@ -372,7 +382,7 @@
 
     <div id="manageModal" class="modal">
       <div class="modal-content">
-        <span class="close" onclick="closeModal()">&times;</span>
+        <button type="button" class="close" onclick="closeModal()" aria-label="Close">&times;</button>
         <h3 id="modalTitle" style="margin-top:0;">Manage PO: </h3>
         
         <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 10px;">
@@ -412,7 +422,7 @@
 
     <div id="editModal" class="modal">
       <div class="modal-content">
-        <span class="close" onclick="closeEditModal()">&times;</span>
+        <button type="button" class="close" onclick="closeEditModal()" aria-label="Close">&times;</button>
         <h3 id="editModalTitle" style="margin-top:0;">Edit PO: </h3>
         <hr style="border:0; border-top:1px solid #eee; margin-bottom:15px;">
 
@@ -447,7 +457,7 @@
     
     <div id="editLotModal" class="modal">
       <div class="modal-content" style="max-width: 600px;">
-        <span class="close" onclick="document.getElementById('editLotModal').style.display='none'">&times;</span>
+        <button type="button" class="close" onclick="document.getElementById('editLotModal').style.display='none'" aria-label="Close">&times;</button>
         <h3 style="margin-top:0;">Edit Lot: <span id="editLotProjectDisplay"></span> - Phase <span id="editLotPhaseDisplay"></span> - Lot <span id="editLotNumDisplay"></span></h3>
         <hr style="border:0; border-top:1px solid #eee; margin-bottom:15px;">
         <form id="editLotForm" onsubmit="submitEditLotForm(event)">
@@ -478,11 +488,11 @@
     </div>
 
     <!-- AI WIDGET -->
-    <div class="ai-chat-launcher" id="aiLauncher" onclick="toggleAiChat()" title="Ask Gemini AI">✨</div>
+    <button type="button" class="ai-chat-launcher" id="aiLauncher" onclick="toggleAiChat()" title="Ask Gemini AI" aria-label="Open AI Assistant" aria-haspopup="true">✨</button>
     <div class="ai-chat-window" id="aiChatWindow">
       <div class="ai-chat-header">
         <span>🤖 Build Connect AI Assistant</span>
-        <span class="ai-chat-close" onclick="toggleAiChat()">&times;</span>
+        <button type="button" class="ai-chat-close" onclick="toggleAiChat()" aria-label="Close">&times;</button>
       </div>
       <div class="ai-chat-messages" id="aiChatMessages">
         <div class="ai-msg ai-msg-bot">Hello! Ask me any tracking question, or mention a specific Lot/Project to scan through its local Google Sheets schedules or Google Docs color selections. (Note: I am restricted from parsing static PDFs).</div>
@@ -768,7 +778,7 @@
           for (var j = 0; j < data[i].length; j++) { 
             if (j === 6 || skipColIndices.indexOf(j) > -1) continue; 
             if (i === 0) {
-              html += "<th class='sort-header' onclick=\"sortTable('contractorTable', " + j + ")\">" + escapeHtml(data[i][j]) + "</th>";
+              html += "<th class='sort-header' tabindex='0' role='columnheader' aria-label='Sort by " + escapeHtml(data[i][j]) + "' onclick=\"sortTable('contractorTable', " + j + ")\" onkeydown=\"if(event.key==='Enter'||event.key===' '){event.preventDefault();sortTable('contractorTable', " + j + ")}\">" + escapeHtml(data[i][j]) + "</th>";
             } else {
               var safeLabel = String(headers[j]).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
               html += "<td data-label='" + safeLabel + "'>" + escapeHtml(data[i][j]) + "</td>";
@@ -1003,7 +1013,7 @@
           for (var j = 0; j < maxCols; j++) { 
             if (skipColIndices.indexOf(j) > -1) continue; 
             if (i === 0) {
-              html += "<th class='sort-header' onclick=\"sortTable('lotsTable', " + j + ")\">" + escapeHtml(data[i][j]) + "</th>";
+              html += "<th class='sort-header' tabindex='0' role='columnheader' aria-label='Sort by " + escapeHtml(data[i][j]) + "' onclick=\"sortTable('lotsTable', " + j + ")\" onkeydown=\"if(event.key==='Enter'||event.key===' '){event.preventDefault();sortTable('lotsTable', " + j + ")}\">" + escapeHtml(data[i][j]) + "</th>";
             } else {
               var safeLabel = String(headers[j]).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
               var rawValue = String(data[i][j]).trim();
@@ -1379,7 +1389,7 @@
             if (skipColIndices.indexOf(j) > -1) continue; 
             var cellValue = data[i][j] ? data[i][j].toString() : ""; 
             if (i === 0) { 
-               html += "<th class='sort-header' onclick=\"sortTable('poTable', " + j + ")\">" + escapeHtml(cellValue) + "</th>";
+               html += "<th class='sort-header' tabindex='0' role='columnheader' aria-label='Sort by " + escapeHtml(cellValue) + "' onclick=\"sortTable('poTable', " + j + ")\" onkeydown=\"if(event.key==='Enter'||event.key===' '){event.preventDefault();sortTable('poTable', " + j + ")}\">" + escapeHtml(cellValue) + "</th>";
             } else { 
                var safeLabel = String(headers[j]).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
                if(j === 6 && cellValue.indexOf("http") === 0) { 
