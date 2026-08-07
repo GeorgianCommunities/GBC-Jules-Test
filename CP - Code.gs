@@ -1,3 +1,25 @@
+/*
+ * =====================================================================================
+ * ⚠️ IMPORTANT DEPLOYMENT CONFIGURATION TO PREVENT "REQUEST ACCESS" PROMPTS ⚠️
+ * =====================================================================================
+ * This Google Apps Script Web App must be deployed with the following specific settings
+ * to avoid prompting external users (who do not have Google/Workspace accounts or
+ * access to the underlying spreadsheets) to "request access" (Viewer, Editor, etc.):
+ *
+ * 1. Click "Deploy" > "New deployment"
+ * 2. Select "Web app" as the deployment type.
+ * 3. Set "Execute as" to: "Me" (your developer/workspace account)
+ *    -> This ensures the script runs with your administrative privileges and can read/write
+ *       to the Sheets and Drive files without prompting the user.
+ * 4. Set "Who has access" to: "Anyone"
+ *    -> This allows external/internal users (like contractors/homeowners) to successfully load
+ *       and interact with the application.
+ *
+ * DO NOT select "User accessing the web app" or restrict access to "Anyone with Google account"
+ * or "Only myself", as this will break the web application portals.
+ * =====================================================================================
+ */
+
 // --- CONFIG CONSTANTS (Points to your master sheet) ---
 const SHEET_ID = '1rhHn7mXKpjcGY7D1dSQ3K7aWCTFcjYrF_ls7OHmfp4E';
 const SERVICE_MASTER_ID = '1L2-Mbq6Uebqih2qhfhf23A4NRG54aoNR4rQyCEBGCRU';
