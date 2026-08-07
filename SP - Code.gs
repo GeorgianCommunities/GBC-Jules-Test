@@ -10,7 +10,19 @@ const PO_FOLDERS_MASTER_ID = '14Og9DUsIbvdSutd09WZRqSq0maCYATbC';
 const WARRANTY_ROOT_FOLDER_ID = '1BUt0T6XIs3BgR7Red6EE4L2X9sdk7eHO';
 const WARRANTY_TEMPLATE_ID = '1loBscI38L9vtywXvl65tohceruLTCF2jo6A1Px0ppxc'; 
 
-function doGet() {
+function doGet(e) {
+  setupDailyTrigger();
+  if (e && e.parameter && e.parameter.action === 'homeownerFeedback') {
+    return updateHomeownerResponse(
+      e.parameter.project,
+      e.parameter.phase,
+      e.parameter.lot,
+      e.parameter.formName,
+      e.parameter.itemNum,
+      e.parameter.trade,
+      e.parameter.agree
+    );
+  }
   return HtmlService.createHtmlOutputFromFile('Index')
       .setTitle('Georgian Build Connect - Service Portal')
       .setSandboxMode(HtmlService.SandboxMode.IFRAME)
@@ -267,6 +279,321 @@ function getOrCreateFolder(parentFolder, folderName) {
   var folders = parentFolder.searchFolders("title = '" + safeName + "' and trashed = false");
   if (folders.hasNext()) { return folders.next(); }
   return parentFolder.createFolder(folderName);
+}
+
+// =====================================================================================
+// --- HOMEOWNER FEEDBACK, APPROVAL & AUTO-CLOSURE UTILITIES ---
+// =====================================================================================
+
+function getHomeownersForLot(project, phase, lot, lotFolder) {
+  var list = [];
+  try {
+    var sheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName('Homeowners');
+    if (sheet) {
+      var data = sheet.getDataRange().getDisplayValues();
+      var cProj = cleanText(project);
+      var cPhase = cleanText(phase).replace(/^0+/, '');
+      var cLot = cleanText(lot).replace(/^0+/, '');
+      for (var i = 1; i < data.length; i++) {
+        var pProj = cleanText(data[i][5]);
+        var pPhase = cleanText(data[i][6]).replace(/^0+/, '');
+        var pLot = cleanText(data[i][7]).replace(/^0+/, '');
+        if (pProj === cProj && pPhase === cPhase && pLot === cLot) {
+          var email = data[i][3].trim();
+          if (email && email.indexOf('@') > -1) {
+            list.push({
+              firstName: data[i][0],
+              lastName: data[i][1],
+              email: email
+            });
+          }
+        }
+      }
+    }
+  } catch(e) {
+    Logger.log("Error getting from Homeowners tab: " + e.message);
+  }
+
+  if (list.length === 0 && lotFolder) {
+    try {
+      var sheetName = "Lot " + lot.replace(/^0+/, '') + " - Warranty File";
+      var files = lotFolder.searchFiles("title = '" + sheetName.replace(/'/g, "\\'") + "' and mimeType = 'application/vnd.google-apps.spreadsheet'");
+      if (files.hasNext()) {
+        var ss = SpreadsheetApp.openById(files.next().getId());
+        var infoTab = ss.getSheetByName("Homeowner Info");
+        if (infoTab) {
+          var infoData = infoTab.getDataRange().getDisplayValues();
+          var name = "";
+          var emailRaw = "";
+          for (var i = 0; i < infoData.length; i++) {
+            var label = String(infoData[i][0]).trim();
+            if (label === "Name(s):") name = String(infoData[i][1]).trim();
+            if (label === "Email(s):") emailRaw = String(infoData[i][1]).trim();
+          }
+          if (emailRaw && emailRaw.indexOf('@') > -1) {
+            var emails = emailRaw.split(',');
+            for (var e = 0; e < emails.length; e++) {
+              var em = emails[e].trim();
+              if (em && em.indexOf('@') > -1) {
+                list.push({
+                  firstName: name || "Homeowner",
+                  lastName: "",
+                  email: em
+                });
+              }
+            }
+          }
+        }
+      }
+    } catch(e) {
+      Logger.log("Error falling back to warranty file info: " + e.message);
+    }
+  }
+  return list;
+}
+
+function getServiceCoordinatorEmails(project) {
+  var targetEmails = [];
+  try {
+    var settingsSS = SpreadsheetApp.openById(SHEET_ID);
+    var usersSheet = settingsSS.getSheetByName('Users');
+    var pNameLower = cleanText(project);
+
+    if (usersSheet) {
+      var uData = usersSheet.getDataRange().getDisplayValues();
+      for (var u = 1; u < uData.length; u++) {
+        var uJob = cleanText(uData[u][2]);
+        var uProjRaw = cleanText(uData[u][3]);
+        var uEmail = String(uData[u][4]).trim();
+
+        if ((uJob.indexOf("service coordinator") > -1 || uJob.indexOf("coordinator") > -1) && uEmail !== "") {
+          var userProjects = uProjRaw.split(',');
+          var isMatch = false;
+          for (var p = 0; p < userProjects.length; p++) {
+            var cleanUserProj = cleanText(userProjects[p]);
+            if (cleanUserProj === pNameLower || cleanUserProj === "all") {
+              isMatch = true;
+              break;
+            }
+          }
+          if (isMatch && targetEmails.indexOf(uEmail) === -1) {
+            targetEmails.push(uEmail);
+          }
+        }
+      }
+    }
+
+    if (targetEmails.length === 0) {
+      var setSheet = settingsSS.getSheetByName('Settings');
+      if (setSheet) {
+        var sData = setSheet.getDataRange().getValues();
+        for (var s = 1; s < sData.length; s++) {
+          if (cleanText(sData[s][0]) === pNameLower && sData[s][4] !== "") {
+            targetEmails.push(sData[s][4]);
+            break;
+          }
+        }
+      }
+    }
+  } catch(e) {
+    Logger.log("Error getting coordinator emails: " + e.message);
+  }
+  return targetEmails;
+}
+
+function updateHomeownerResponse(project, phase, lot, formName, itemNum, trade, agree) {
+  var isAgree = (agree === 'true');
+  var newStatus = isAgree ? "Closed" : "Repair Rejected";
+
+  var updateMsg = updateServiceItemStatusDirect(project, phase, lot, formName, itemNum, trade, newStatus);
+
+  var coordinators = getServiceCoordinatorEmails(project);
+  if (coordinators.length > 0) {
+    var subject = "Homeowner Feedback: " + project + " - Lot " + lot + " (Item #" + itemNum + ")";
+    var feedbackStr = isAgree ? "AGREED (Completed)" : "DISAGREED (Not Completed)";
+    var body = "Hello,\n\n" +
+               "A homeowner has provided feedback on a completed service item.\n\n" +
+               "Project: " + project + "\n" +
+               "Phase: " + phase + "\n" +
+               "Lot: " + lot + "\n" +
+               "Form: " + formName + "\n" +
+               "Item #: " + itemNum + "\n" +
+               "Assigned Trade: " + trade + "\n\n" +
+               "Feedback: Homeowner clicked \"" + feedbackStr + "\".\n" +
+               "Status has been updated to: \"" + newStatus + "\".\n\n" +
+               "Thank you,\nGeorgian Build Connect";
+    try {
+      MailApp.sendEmail(coordinators.join(","), subject, body, {name: "Georgian Build Connect"});
+    } catch(e) {
+      Logger.log("Coordinator notification failed: " + e.message);
+    }
+  }
+
+  var html = "<html><head><style>" +
+             "body { font-family: sans-serif; background-color: #f8f9fc; color: #333; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; } " +
+             ".container { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 500px; text-align: center; } " +
+             "h2 { color: #1c2d42; margin-top: 0; } " +
+             "p { font-size: 16px; line-height: 1.5; color: #666; } " +
+             ".badge { display: inline-block; padding: 6px 12px; border-radius: 4px; font-weight: bold; color: white; margin-top: 15px; } " +
+             ".badge-closed { background-color: #7f8c8d; } " +
+             ".badge-rejected { background-color: #e74c3c; } " +
+             "</style></head><body>" +
+             "<div class='container'>" +
+             "<h2>Georgian Communities</h2>" +
+             "<p>Thank you for providing your feedback!</p>" +
+             "<p>Your response has been successfully recorded for Item #" + itemNum + " (" + formName + ").</p>" +
+             "<p>We have updated the item status to:</p>" +
+             "<div class='badge " + (isAgree ? "badge-closed" : "badge-rejected") + "'>" + newStatus + "</div>" +
+             "</div>" +
+             "</body></html>";
+  return HtmlService.createHtmlOutput(html).setTitle("Feedback Received - Georgian Communities");
+}
+
+function updateServiceItemStatusDirect(project, phase, lot, formName, itemNum, trade, newStatus) {
+  try {
+    var masterSS = SpreadsheetApp.openById(SERVICE_MASTER_ID);
+    var masterSheet = masterSS.getSheets()[0];
+    var mData = masterSheet.getDataRange().getValues();
+
+    var cProj = cleanText(project), cPhase = cleanText(phase), cLot = cleanText(lot), cForm = cleanText(formName), cItem = cleanText(itemNum), cTrade = cleanText(trade);
+
+    for (var i = 1; i < mData.length; i++) {
+      if (cleanText(mData[i][1]) === cProj && cleanText(mData[i][2]) === cPhase && cleanText(mData[i][3]) === cLot && cleanText(mData[i][4]) === cForm && cleanText(mData[i][5]) === cItem && cleanText(mData[i][11]) === cTrade) {
+         masterSheet.getRange(i + 1, 17).setValue(newStatus);
+         break;
+      }
+    }
+
+    var rootFolder = DriveApp.getFolderById(WARRANTY_ROOT_FOLDER_ID);
+    var projectFolder = getOrCreateFolder(rootFolder, project);
+    var phaseFolder = getOrCreateFolder(projectFolder, "Phase " + phase);
+    var lotFolder = getOrCreateFolder(phaseFolder, "Lot " + lot);
+
+    var sheetName = "Lot " + lot + " - Warranty File";
+    var existingFiles = lotFolder.searchFiles("title = '" + sheetName.replace(/'/g, "\\'") + "' and mimeType = 'application/vnd.google-apps.spreadsheet'");
+
+    if (existingFiles.hasNext()) {
+      var ss = SpreadsheetApp.openById(existingFiles.next().getId());
+      var formTab = ss.getSheetByName(formName);
+      if (formTab) {
+        var fData = formTab.getDataRange().getValues();
+        var hdrs = fData[0].map(function(x){ return String(x).toLowerCase().trim(); });
+        var iStat = hdrs.indexOf("status");
+        var iTrade = hdrs.indexOf("assigned trade");
+
+        for (var r = 1; r < fData.length; r++) {
+           if (cleanText(fData[r][0]) === cItem && cleanText(fData[r][iTrade]) === cTrade) {
+              if (iStat > -1) {
+                formTab.getRange(r + 1, iStat + 1).setValue(newStatus);
+              }
+              break;
+           }
+        }
+      }
+    }
+    return "Status updated to " + newStatus;
+  } catch (e) {
+    return "Error: " + e.message;
+  }
+}
+
+function checkAndCloseOverdueApprovedServiceOrders() {
+  try {
+    var masterSS = SpreadsheetApp.openById(SERVICE_MASTER_ID);
+    var masterSheet = masterSS.getSheets()[0];
+    var mData = masterSheet.getDataRange().getValues();
+    var today = new Date();
+
+    for (var i = 1; i < mData.length; i++) {
+      var status = mData[i][16];
+      if (status === "Approved") {
+        var addInfo = String(mData[i][10]);
+        var match = addInfo.match(/\[Approved Date:\s*([^\]]+)\]/);
+        if (match) {
+          var dateStr = match[1].trim();
+          var approvedDate = new Date(dateStr);
+          if (!isNaN(approvedDate.getTime())) {
+            var diffTime = Math.abs(today - approvedDate);
+            var diffDaysDecimal = diffTime / (1000 * 60 * 60 * 24);
+
+            if (diffDaysDecimal >= 14) {
+              var project = mData[i][1];
+              var phase = mData[i][2];
+              var lot = mData[i][3];
+              var formName = mData[i][4];
+              var itemNum = mData[i][5];
+              var trade = mData[i][11];
+
+              var autoCloseDateStr = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd");
+              var closeMsg = "No response received from purchaser. Item automatically closed. [Closed Date: " + autoCloseDateStr + "]";
+
+              masterSheet.getRange(i + 1, 17).setValue("Closed");
+
+              var newAddInfoMaster = addInfo ? addInfo + "\n" + closeMsg : closeMsg;
+              masterSheet.getRange(i + 1, 11).setValue(newAddInfoMaster);
+
+              try {
+                var rootFolder = DriveApp.getFolderById(WARRANTY_ROOT_FOLDER_ID);
+                var projectFolder = getOrCreateFolder(rootFolder, project);
+                var phaseFolder = getOrCreateFolder(projectFolder, "Phase " + phase);
+                var lotFolder = getOrCreateFolder(phaseFolder, "Lot " + lot);
+
+                var sheetName = "Lot " + lot + " - Warranty File";
+                var existingFiles = lotFolder.searchFiles("title = '" + sheetName.replace(/'/g, "\\'") + "' and mimeType = 'application/vnd.google-apps.spreadsheet'");
+
+                if (existingFiles.hasNext()) {
+                  var ss = SpreadsheetApp.openById(existingFiles.next().getId());
+                  var formTab = ss.getSheetByName(formName);
+                  if (formTab) {
+                    var fData = formTab.getDataRange().getValues();
+                    var hdrs = fData[0].map(function(x){ return String(x).toLowerCase().trim(); });
+                    var iStat = hdrs.indexOf("status");
+                    var iTrade = hdrs.indexOf("assigned trade");
+                    var iAdd = hdrs.indexOf("additional information") > -1 ? hdrs.indexOf("additional information") : hdrs.indexOf("trade description");
+
+                    for (var r = 1; r < fData.length; r++) {
+                       if (cleanText(fData[r][0]) === cleanText(itemNum) && cleanText(fData[r][iTrade]) === cleanText(trade)) {
+                          if (iStat > -1) {
+                            formTab.getRange(r + 1, iStat + 1).setValue("Closed");
+                          }
+                          if (iAdd > -1) {
+                            var currentLocalAdd = formTab.getRange(r + 1, iAdd + 1).getValue();
+                            var newAddInfoLocal = currentLocalAdd ? currentLocalAdd + "\n" + closeMsg : closeMsg;
+                            formTab.getRange(r + 1, iAdd + 1).setValue(newAddInfoLocal);
+                          }
+                          break;
+                       }
+                    }
+                  }
+                }
+              } catch(localErr) {
+                Logger.log("Error updating local sheet during auto-close: " + localErr.message);
+              }
+            }
+          }
+        }
+      }
+    }
+  } catch(e) {
+    Logger.log("Error in checkAndCloseOverdueApprovedServiceOrders: " + e.message);
+  }
+}
+
+function setupDailyTrigger() {
+  var triggers = ScriptApp.getProjectTriggers();
+  var triggerExists = false;
+  for (var i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === 'checkAndCloseOverdueApprovedServiceOrders') {
+      triggerExists = true;
+      break;
+    }
+  }
+  if (!triggerExists) {
+    ScriptApp.newTrigger('checkAndCloseOverdueApprovedServiceOrders')
+             .timeBased()
+             .everyDays(1)
+             .create();
+  }
 }
 
 function parseClaimItems(text, formType) {
@@ -1046,6 +1373,15 @@ function updateServiceItemDetails(project, phase, lot, formName, itemNum, target
          masterSheet.getRange(i + 1, 14).setValue(finalSchedDate); 
          if(warrantedValue !== "") masterSheet.getRange(i + 1, 16).setValue(warrantedValue); 
          
+         if (newStatus === "Approved") {
+             var approvedDateStr = "[Approved Date: " + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd") + "]";
+             var currentVal = masterSheet.getRange(i + 1, 11).getValue();
+             if (String(currentVal).indexOf("[Approved Date:") === -1) {
+                 var newVal = currentVal ? currentVal + "\n" + approvedDateStr : approvedDateStr;
+                 masterSheet.getRange(i + 1, 11).setValue(newVal);
+             }
+         }
+
          if (savedFileUrl !== "") {
              var currentMasterPhoto = String(mData[i][14] || "").trim();
              var newMasterPhoto = currentMasterPhoto ? currentMasterPhoto + "\n\n" + savedFileUrl : savedFileUrl;
@@ -1071,6 +1407,7 @@ function updateServiceItemDetails(project, phase, lot, formName, itemNum, target
         var iStat = hdrs.indexOf("status");
         var iTrade = hdrs.indexOf("assigned trade");
         var iPhoto = hdrs.indexOf("photo link");
+        var iAdd = hdrs.indexOf("additional information") > -1 ? hdrs.indexOf("additional information") : hdrs.indexOf("trade description");
 
         for (var r = 1; r < fData.length; r++) {
            if (cleanText(fData[r][0]) === cItem && cleanText(fData[r][iTrade]) === cTrade) {
@@ -1079,6 +1416,15 @@ function updateServiceItemDetails(project, phase, lot, formName, itemNum, target
               if(iSched > -1) formTab.getRange(r + 1, iSched + 1).setValue(finalSchedDate); 
               if(iWarr > -1 && warrantedValue !== "") formTab.getRange(r + 1, iWarr + 1).setValue(warrantedValue); 
               
+              if (newStatus === "Approved" && iAdd > -1) {
+                 var approvedDateStr = "[Approved Date: " + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd") + "]";
+                 var currentVal = formTab.getRange(r + 1, iAdd + 1).getValue();
+                 if (String(currentVal).indexOf("[Approved Date:") === -1) {
+                     var newVal = currentVal ? currentVal + "\n" + approvedDateStr : approvedDateStr;
+                     formTab.getRange(r + 1, iAdd + 1).setValue(newVal);
+                 }
+              }
+
               if(savedFileUrl !== "" && iPhoto > -1) {
                   var currentLotPhoto = String(fData[r][iPhoto] || "").trim();
                   var newLotPhoto = currentLotPhoto ? currentLotPhoto + "\n\n" + savedFileUrl : savedFileUrl;
@@ -1092,6 +1438,71 @@ function updateServiceItemDetails(project, phase, lot, formName, itemNum, target
       } else {
         lotSheetMsg = "Form Tab not found in Lot Sheet.";
       }
+    }
+
+    if (newStatus === "Approved") {
+        try {
+            var homeowners = getHomeownersForLot(project, phase, lot, lotFolder);
+            if (homeowners.length > 0) {
+                var webAppUrl = "";
+                try {
+                    webAppUrl = ScriptApp.getService().getUrl();
+                } catch(urlErr) {
+                    Logger.log("getUrl error: " + urlErr.message);
+                }
+                if (!webAppUrl || webAppUrl === "") {
+                    webAppUrl = "https://script.google.com/macros/s/AKfycbx_placeholder/exec";
+                }
+
+                for (var h = 0; h < homeowners.length; h++) {
+                    var ho = homeowners[h];
+                    var agreeUrl = webAppUrl + "?action=homeownerFeedback&project=" + encodeURIComponent(project) + "&phase=" + encodeURIComponent(phase) + "&lot=" + encodeURIComponent(lot) + "&formName=" + encodeURIComponent(formName) + "&itemNum=" + encodeURIComponent(itemNum) + "&trade=" + encodeURIComponent(targetTrade) + "&agree=true";
+                    var disagreeUrl = webAppUrl + "?action=homeownerFeedback&project=" + encodeURIComponent(project) + "&phase=" + encodeURIComponent(phase) + "&lot=" + encodeURIComponent(lot) + "&formName=" + encodeURIComponent(formName) + "&itemNum=" + encodeURIComponent(itemNum) + "&trade=" + encodeURIComponent(targetTrade) + "&agree=false";
+
+                    var subject = "Action Required: Please review completed service item - Lot " + lot;
+                    var bodyHtml = "<p>Hello " + ho.firstName + ",</p>" +
+                                   "<p>The Georgian Communities service coordinator has marked the following service order as <strong>approved</strong>:</p>" +
+                                   "<ul>" +
+                                   "  <li><strong>Project:</strong> " + project + "</li>" +
+                                   "  <li><strong>Phase:</strong> " + phase + "</li>" +
+                                   "  <li><strong>Lot:</strong> " + lot + "</li>" +
+                                   "  <li><strong>Form:</strong> " + formName + "</li>" +
+                                   "  <li><strong>Item #:</strong> " + itemNum + "</li>" +
+                                   "</ul>" +
+                                   "<p>Do you agree that this service item has been successfully completed?</p>" +
+                                   "<p>Please click one of the options below to let us know:</p>" +
+                                   "<p style='margin-top: 20px; margin-bottom: 20px;'>" +
+                                   "  <a href='" + agreeUrl + "' style='background-color: #4a6b5d; color: white; padding: 12px 20px; text-decoration: none; border-radius: 4px; display: inline-block; font-weight: bold; margin-right: 15px;'>Yes, I agree it is completed</a>" +
+                                   "  <a href='" + disagreeUrl + "' style='background-color: #8b3a3a; color: white; padding: 12px 20px; text-decoration: none; border-radius: 4px; display: inline-block; font-weight: bold;'>No, I do not agree</a>" +
+                                   "</p>" +
+                                   "<p><em>Please note: If no response is received within 14 days, Georgian Communities will consider the service order approved and closed.</em></p>" +
+                                   "<p>Thank you,<br>Georgian Communities</p>";
+
+                    var bodyText = "Hello " + ho.firstName + ",\n\n" +
+                                   "The Georgian Communities service coordinator has marked the following service order as approved:\n\n" +
+                                   "Project: " + project + "\n" +
+                                   "Phase: " + phase + "\n" +
+                                   "Lot: " + lot + "\n" +
+                                   "Form: " + formName + "\n" +
+                                   "Item #: " + itemNum + "\n\n" +
+                                   "Do you agree that this service item has been successfully completed?\n\n" +
+                                   "Yes, I agree (click below or copy link):\n" + agreeUrl + "\n\n" +
+                                   "No, I do not agree (click below or copy link):\n" + disagreeUrl + "\n\n" +
+                                   "Please note: If no response is received within 14 days, Georgian Communities will consider the service order approved and closed.\n\n" +
+                                   "Thank you,\nGeorgian Communities";
+
+                    MailApp.sendEmail({
+                        to: ho.email,
+                        subject: subject,
+                        htmlBody: bodyHtml,
+                        body: bodyText,
+                        name: "Georgian Communities"
+                    });
+                }
+            }
+        } catch(hoErr) {
+            Logger.log("Error notifying homeowner: " + hoErr.message);
+        }
     }
 
     var emailDebugMsg = "";
