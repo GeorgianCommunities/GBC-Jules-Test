@@ -29,11 +29,13 @@
       
       .sort-header { cursor: pointer; user-select: none; transition: 0.2s; }
       .sort-header:hover { background-color: #3b536b; }
+      .sort-header:focus-visible { outline: 2px solid #c6a87c; outline-offset: -2px; }
 
       .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(28, 45, 66, 0.6); }
       .modal-content { background-color: #fcfcfc; margin: 5% auto; padding: 25px; border: none; width: 90%; max-width: 500px; border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto;}
-      .close { color: #888; float: right; font-size: 28px; font-weight: bold; cursor: pointer; margin-top:-10px;}
+      .close { color: #888; float: right; font-size: 28px; font-weight: bold; cursor: pointer; margin-top:-10px; background: none; border: none; padding: 0; font-family: inherit; }
       .close:hover, .close:focus { color: #1c2d42; text-decoration: none; }
+      .close:focus-visible { outline: 2px solid #1c2d42; outline-offset: 2px; }
       
       .settings-btn { position: absolute; top: 20px; right: 20px; background-color: #1c2d42; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; display: none; z-index: 100; }
       .settings-btn:hover { background-color: #3b536b; }
@@ -56,13 +58,15 @@
       .status-approved { background-color: #2ecc71; color: white; }
 
       /* AI CHAT WIDGET STYLES */
-      .ai-chat-launcher { position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px; background-color: #c6a87c; color: #1c2d42; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 10000; transition: transform 0.2s; }
+      .ai-chat-launcher { position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px; background-color: #c6a87c; color: #1c2d42; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 10000; transition: transform 0.2s; border: none; padding: 0; font-family: inherit; }
       .ai-chat-launcher:hover { transform: scale(1.05); background-color: #bfa073; }
+      .ai-chat-launcher:focus-visible { outline: 3px solid #1c2d42; outline-offset: 3px; }
       
       .ai-chat-window { position: fixed; bottom: 95px; right: 25px; width: 360px; height: 480px; background: white; border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,0.25); display: none; flex-direction: column; z-index: 10000; overflow: hidden; border: 1px solid #dcdcdc; }
       .ai-chat-header { background-color: #1c2d42; color: white; padding: 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-      .ai-chat-close { cursor: pointer; font-size: 20px; font-weight: bold; line-height: 1; }
+      .ai-chat-close { cursor: pointer; font-size: 20px; font-weight: bold; line-height: 1; background: none; border: none; padding: 0; color: white; font-family: inherit; }
       .ai-chat-close:hover { color: #c6a87c; }
+      .ai-chat-close:focus-visible { outline: 2px solid #c6a87c; outline-offset: 2px; }
       
       .ai-chat-messages { flex: 1; padding: 15px; overflow-y: auto; background-color: #f8f9fc; display: flex; flex-direction: column; gap: 10px; font-size: 13px; }
       .ai-msg { padding: 10px 12px; border-radius: 8px; max-width: 85%; line-height: 1.4; word-break: break-word; }
@@ -371,7 +375,7 @@
     <!-- EDIT HOMEOWNER MODAL -->
     <div id="editHomeownerModal" class="modal">
       <div class="modal-content" style="max-width: 600px;">
-        <span class="close" onclick="closeEditHoModal()">&times;</span>
+        <button type="button" class="close" onclick="closeEditHoModal()" aria-label="Close">&times;</button>
         <h3 style="margin-top:0;">Edit Homeowner</h3>
         <hr style="border:0; border-top:1px solid #eee; margin-bottom:15px;">
         <form id="editHomeownerForm" onsubmit="submitEditHoForm(event)">
@@ -401,7 +405,7 @@
     <!-- PRINT REPORT MODAL -->
     <div id="reportModal" class="modal">
       <div class="modal-content" style="max-width: 600px;">
-        <span class="close" onclick="closeReportModal()">x</span>
+        <button type="button" class="close" onclick="closeReportModal()" aria-label="Close">&times;</button>
         <h3 style="margin-top:0;">Generate Service Report</h3>
         
         <h4 style="margin-bottom:5px;">1. Report Filters</h4>
@@ -445,7 +449,7 @@
     <!-- SETTINGS MODAL -->
     <div id="userSettingsModal" class="modal">
       <div class="modal-content" style="max-width: 600px;">
-        <span class="close" onclick="closeUserSettingsModal()">&times;</span>
+        <button type="button" class="close" onclick="closeUserSettingsModal()" aria-label="Close">&times;</button>
         <h3 style="margin-top:0;">User Preferences</h3>
         <hr style="border:0; border-top:1px solid #eee; margin-bottom:15px;">
         <form onsubmit="saveUserSettings(event)">
@@ -543,7 +547,7 @@
     <!-- PO MANAGE MODAL -->
     <div id="manageModal" class="modal">
       <div class="modal-content">
-        <span class="close" onclick="closeModal()">x</span>
+        <button type="button" class="close" onclick="closeModal()" aria-label="Close">&times;</button>
         <h3 id="modalTitle" style="margin-top:0;">Manage PO: </h3>
         <h4 style="margin-bottom: 5px;">Update Status</h4>
         <div class="form-row">
@@ -561,7 +565,7 @@
     <!-- REJECT SERVICE ITEM MODAL -->
     <div id="rejectServiceModal" class="modal" style="z-index: 1001;">
       <div class="modal-content" style="max-width: 400px;">
-        <span class="close" onclick="closeRejectModal()">&times;</span>
+        <button type="button" class="close" onclick="closeRejectModal()" aria-label="Close">&times;</button>
         <h4 style="margin-top:0; color:#8b3a3a;">Item Not Approved</h4>
         <p style="font-size:13px; color:#666;">Provide a reason and an optional photo to send directly to the trade. Status will be reverted to 'Assigned'.</p>
         
@@ -578,7 +582,7 @@
     <!-- SERVICE ITEM MANAGE MODAL -->
     <div id="manageServiceModal" class="modal">
       <div class="modal-content">
-        <span class="close" onclick="closeManageServiceModal()">x</span>
+        <button type="button" class="close" onclick="closeManageServiceModal()" aria-label="Close">&times;</button>
         <h3 id="serviceModalTitle" style="margin-top:0;">Manage Service Item</h3>
         
         <div style="margin-top:15px;">
@@ -623,7 +627,7 @@
     <!-- SCHEDULE EVENT MODAL -->
     <div id="eventModal" class="modal">
       <div class="modal-content">
-        <span class="close" onclick="closeEventModal()">x</span>
+        <button type="button" class="close" onclick="closeEventModal()" aria-label="Close">&times;</button>
         <h3 id="eventModalTitle" style="margin-top:0; color:#1c2d42;">Service Event Details</h3>
         <hr style="border:0; border-top:1px solid #eee; margin-bottom:15px;">
         <div id="eventModalBody" style="line-height: 1.8; font-size: 14px;"></div>
@@ -631,11 +635,11 @@
     </div>
 
     <!-- AI WIDGET -->
-    <div class="ai-chat-launcher" id="aiLauncher" onclick="toggleAiChat()" title="Ask Gemini AI">✨</div>
+    <button type="button" class="ai-chat-launcher" id="aiLauncher" onclick="toggleAiChat()" title="Ask Gemini AI" aria-label="Open AI Assistant" aria-haspopup="true">✨</button>
     <div class="ai-chat-window" id="aiChatWindow">
       <div class="ai-chat-header">
         <span>🤖 Build Connect AI Assistant</span>
-        <span class="ai-chat-close" onclick="toggleAiChat()">&times;</span>
+        <button type="button" class="ai-chat-close" onclick="toggleAiChat()" aria-label="Close">&times;</button>
       </div>
       <div class="ai-chat-messages" id="aiChatMessages">
         <div class="ai-msg ai-msg-bot">Hello! Ask me any tracking question, or mention a specific Lot/Project to scan through its local Google Sheets schedules or Google Docs color selections. (Note: I am restricted from parsing static PDFs).</div>
@@ -952,7 +956,7 @@
             var safeLabel = String(headers[j]).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
             
             if (i === 0) {
-              html += "<th class='sort-header' onclick=\"sortTable('hoTable', " + j + ")\">" + escapeHtml(data[i][j]) + "</th>";
+              html += "<th class='sort-header' tabindex='0' role='columnheader' aria-label='Sort by " + escapeHtml(data[i][j]) + "' onclick=\"sortTable('hoTable', " + j + ")\" onkeydown=\"if(event.key==='Enter'||event.key===' '){event.preventDefault();sortTable('hoTable', " + j + ")}\">" + escapeHtml(data[i][j]) + "</th>";
             } else {
               html += "<td data-label='" + safeLabel + "'>" + escapeHtml(data[i][j]) + "</td>";
             }
@@ -1133,7 +1137,7 @@
           for (var j = 0; j < data[i].length; j++) { 
             if (j === 6 || skipColIndices.indexOf(j) > -1) continue; 
             if (i === 0) {
-              html += "<th class='sort-header' onclick=\"sortTable('contractorTable', " + j + ")\">" + escapeHtml(data[i][j]) + "</th>";
+              html += "<th class='sort-header' tabindex='0' role='columnheader' aria-label='Sort by " + escapeHtml(data[i][j]) + "' onclick=\"sortTable('contractorTable', " + j + ")\" onkeydown=\"if(event.key==='Enter'||event.key===' '){event.preventDefault();sortTable('contractorTable', " + j + ")}\">" + escapeHtml(data[i][j]) + "</th>";
             } else {
               var safeLabel = String(headers[j]).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
               html += "<td data-label='" + safeLabel + "'>" + escapeHtml(data[i][j]) + "</td>";

@@ -29,6 +29,7 @@
       tr:nth-child(even) { background-color: #fcfcfc; }
       .sort-header { cursor: pointer; user-select: none; transition: 0.2s; }
       .sort-header:hover { background-color: #3b536b; }
+      .sort-header:focus-visible { outline: 2px solid #c6a87c; outline-offset: -2px; }
       
       .badge { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; display: inline-block; }
       
@@ -49,11 +50,11 @@
       <p style="color:#666; font-size:14px; margin-bottom:20px;">Homeowner Portal Login</p>
       <form onsubmit="handlePortalLogin(event)">
         <div class="form-row">
-          <label style="font-weight:bold; font-size:13px;">Email Address</label>
+          <label for="loginEmail" style="font-weight:bold; font-size:13px;">Email Address</label>
           <input type="email" id="loginEmail" placeholder="your@email.com" required>
         </div>
         <div class="form-row">
-          <label style="font-weight:bold; font-size:13px;">Passcode</label>
+          <label for="loginPasscode" style="font-weight:bold; font-size:13px;">Passcode</label>
           <input type="password" id="loginPasscode" placeholder="••••••••" required>
         </div>
         <button type="submit" class="btn-submit">Access My Home</button>
@@ -420,15 +421,15 @@
 
       function renderWarrantyTable(items) {
         var html = "<table id='hoWarrantyTable'><tr>" +
-           "<th class='sort-header' onclick='sortTable(\"hoWarrantyTable\", 0)'>Form Type</th>" +
-           "<th class='sort-header' onclick='sortTable(\"hoWarrantyTable\", 1)'>Item #</th>" +
-           "<th class='sort-header' onclick='sortTable(\"hoWarrantyTable\", 2)'>Location/Area</th>" +
-           "<th class='sort-header' onclick='sortTable(\"hoWarrantyTable\", 3)'>Defect Area</th>" +
-           "<th class='sort-header' onclick='sortTable(\"hoWarrantyTable\", 4)'>Description</th>" +
-           "<th class='sort-header' onclick='sortTable(\"hoWarrantyTable\", 5)'>Additional Info</th>" +
-           "<th class='sort-header' onclick='sortTable(\"hoWarrantyTable\", 6)'>Scheduled Date</th>" +
-           "<th class='sort-header' onclick='sortTable(\"hoWarrantyTable\", 7)'>Warranted</th>" +
-           "<th class='sort-header' onclick='sortTable(\"hoWarrantyTable\", 8)'>Status</th>" +
+           "<th class='sort-header' tabindex='0' role='columnheader' aria-label='Sort by Form Type' onclick='sortTable(\"hoWarrantyTable\", 0)' onkeydown='if(event.key===\"Enter\"||event.key===\" \"){event.preventDefault();sortTable(\"hoWarrantyTable\", 0)}'>Form Type</th>" +
+           "<th class='sort-header' tabindex='0' role='columnheader' aria-label='Sort by Item #' onclick='sortTable(\"hoWarrantyTable\", 1)' onkeydown='if(event.key===\"Enter\"||event.key===\" \"){event.preventDefault();sortTable(\"hoWarrantyTable\", 1)}'>Item #</th>" +
+           "<th class='sort-header' tabindex='0' role='columnheader' aria-label='Sort by Location/Area' onclick='sortTable(\"hoWarrantyTable\", 2)' onkeydown='if(event.key===\"Enter\"||event.key===\" \"){event.preventDefault();sortTable(\"hoWarrantyTable\", 2)}'>Location/Area</th>" +
+           "<th class='sort-header' tabindex='0' role='columnheader' aria-label='Sort by Defect Area' onclick='sortTable(\"hoWarrantyTable\", 3)' onkeydown='if(event.key===\"Enter\"||event.key===\" \"){event.preventDefault();sortTable(\"hoWarrantyTable\", 3)}'>Defect Area</th>" +
+           "<th class='sort-header' tabindex='0' role='columnheader' aria-label='Sort by Description' onclick='sortTable(\"hoWarrantyTable\", 4)' onkeydown='if(event.key===\"Enter\"||event.key===\" \"){event.preventDefault();sortTable(\"hoWarrantyTable\", 4)}'>Description</th>" +
+           "<th class='sort-header' tabindex='0' role='columnheader' aria-label='Sort by Additional Info' onclick='sortTable(\"hoWarrantyTable\", 5)' onkeydown='if(event.key===\"Enter\"||event.key===\" \"){event.preventDefault();sortTable(\"hoWarrantyTable\", 5)}'>Additional Info</th>" +
+           "<th class='sort-header' tabindex='0' role='columnheader' aria-label='Sort by Scheduled Date' onclick='sortTable(\"hoWarrantyTable\", 6)' onkeydown='if(event.key===\"Enter\"||event.key===\" \"){event.preventDefault();sortTable(\"hoWarrantyTable\", 6)}'>Scheduled Date</th>" +
+           "<th class='sort-header' tabindex='0' role='columnheader' aria-label='Sort by Warranted' onclick='sortTable(\"hoWarrantyTable\", 7)' onkeydown='if(event.key===\"Enter\"||event.key===\" \"){event.preventDefault();sortTable(\"hoWarrantyTable\", 7)}'>Warranted</th>" +
+           "<th class='sort-header' tabindex='0' role='columnheader' aria-label='Sort by Status' onclick='sortTable(\"hoWarrantyTable\", 8)' onkeydown='if(event.key===\"Enter\"||event.key===\" \"){event.preventDefault();sortTable(\"hoWarrantyTable\", 8)}'>Status</th>" +
            "<th>Manage</th>" +
            "</tr>";
         
