@@ -405,7 +405,12 @@ function updateHomeownerResponse(project, phase, lot, formName, itemNum, trade, 
   var isAgree = (agree === 'true');
   var newStatus = isAgree ? "Closed" : "Repair Rejected";
 
-  var updateMsg = updateServiceItemStatusDirect(project, phase, lot, formName, itemNum, trade, newStatus);
+  var clickDateTimeStr = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm:ss");
+  var logMessage = isAgree
+    ? "Homeowner agreed that the item has been completed. Date/Time: " + clickDateTimeStr
+    : "Homeowner disagreed that the item has been completed. Date/Time: " + clickDateTimeStr;
+
+  var updateMsg = updateServiceItemStatusDirect(project, phase, lot, formName, itemNum, trade, newStatus, logMessage);
 
   var coordinators = getServiceCoordinatorEmails(project);
   if (coordinators.length > 0) {
@@ -449,7 +454,7 @@ function updateHomeownerResponse(project, phase, lot, formName, itemNum, trade, 
   return HtmlService.createHtmlOutput(html).setTitle("Feedback Received - Georgian Communities");
 }
 
-function updateServiceItemStatusDirect(project, phase, lot, formName, itemNum, trade, newStatus) {
+function updateServiceItemStatusDirect(project, phase, lot, formName, itemNum, trade, newStatus, logMessage) {
   try {
     var masterSS = SpreadsheetApp.openById(SERVICE_MASTER_ID);
     var masterSheet = masterSS.getSheets()[0];
@@ -460,6 +465,11 @@ function updateServiceItemStatusDirect(project, phase, lot, formName, itemNum, t
     for (var i = 1; i < mData.length; i++) {
       if (cleanText(mData[i][1]) === cProj && cleanText(mData[i][2]) === cPhase && cleanText(mData[i][3]) === cLot && cleanText(mData[i][4]) === cForm && cleanText(mData[i][5]) === cItem && cleanText(mData[i][11]) === cTrade) {
          masterSheet.getRange(i + 1, 17).setValue(newStatus);
+         if (logMessage) {
+           var currentVal = masterSheet.getRange(i + 1, 11).getValue();
+           var newVal = currentVal ? currentVal + "\n" + logMessage : logMessage;
+           masterSheet.getRange(i + 1, 11).setValue(newVal);
+         }
          break;
       }
     }
@@ -480,11 +490,17 @@ function updateServiceItemStatusDirect(project, phase, lot, formName, itemNum, t
         var hdrs = fData[0].map(function(x){ return String(x).toLowerCase().trim(); });
         var iStat = hdrs.indexOf("status");
         var iTrade = hdrs.indexOf("assigned trade");
+        var iAdd = hdrs.indexOf("additional information") > -1 ? hdrs.indexOf("additional information") : hdrs.indexOf("trade description");
 
         for (var r = 1; r < fData.length; r++) {
            if (cleanText(fData[r][0]) === cItem && cleanText(fData[r][iTrade]) === cTrade) {
               if (iStat > -1) {
                 formTab.getRange(r + 1, iStat + 1).setValue(newStatus);
+              }
+              if (logMessage && iAdd > -1) {
+                var currentVal = formTab.getRange(r + 1, iAdd + 1).getValue();
+                var newVal = currentVal ? currentVal + "\n" + logMessage : logMessage;
+                formTab.getRange(r + 1, iAdd + 1).setValue(newVal);
               }
               break;
            }
