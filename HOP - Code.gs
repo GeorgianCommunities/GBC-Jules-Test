@@ -245,6 +245,68 @@ function addManualWarrantyItem(formData) {
   }
 }
 
+function deleteUnsubmittedWarrantyItem(formData) {
+  try {
+    var projectName = cleanText(formData.project);
+    var nPhase = cleanText(formData.phase).replace(/^0+/, '');
+    var nLot = cleanText(formData.lot).replace(/^0+/, '');
+    var formType = formData.formType;
+    var itemNum = parseInt(formData.itemNum, 10);
+
+    // 1. Locate the Local Lot Spreadsheet
+    var rootFolder = DriveApp.getFolderById(WARRANTY_ROOT_FOLDER_ID);
+    var pFolder = rootFolder.searchFolders("title = '" + projectName.replace(/'/g, "\\'") + "' and trashed = false");
+    if (!pFolder.hasNext()) return "Error: Project folder not found.";
+    var phFolder = pFolder.next().searchFolders("title = 'Phase " + nPhase.replace(/'/g, "\\'") + "' and trashed = false");
+    if (!phFolder.hasNext()) return "Error: Phase folder not found.";
+    var lFolder = phFolder.next().searchFolders("title = 'Lot " + nLot.replace(/'/g, "\\'") + "' and trashed = false");
+    if (!lFolder.hasNext()) return "Error: Lot folder not found.";
+
+    var sheetName = "Lot " + nLot + " - Warranty File";
+    var existingFiles = lFolder.next().searchFiles("title = '" + sheetName.replace(/'/g, "\\'") + "' and mimeType = 'application/vnd.google-apps.spreadsheet'");
+    if (!existingFiles.hasNext()) return "Error: Warranty spreadsheet not found.";
+
+    var ss = SpreadsheetApp.openById(existingFiles.next().getId());
+    var formTab = ss.getSheetByName(formType);
+    if (!formTab) return "Error: Form tab not found.";
+
+    // 2. Find and delete the row in the lot spreadsheet
+    var data = formTab.getDataRange().getValues();
+    var rowIndex = -1;
+    for (var r = 1; r < data.length; r++) {
+      if (data[r][0] == itemNum && data[r][11] === "Unsubmitted") {
+        rowIndex = r + 1;
+        break;
+      }
+    }
+
+    if (rowIndex > -1) {
+      formTab.deleteRow(rowIndex);
+    } else {
+      return "Error: Item could not be found or is not Unsubmitted.";
+    }
+
+    // 3. Delete from the Master Service Sheet as well
+    try {
+      var masterSS = SpreadsheetApp.openById(SERVICE_MASTER_ID);
+      var masterSheet = masterSS.getSheets()[0];
+      var mData = masterSheet.getDataRange().getValues();
+      for (var m = 1; m < mData.length; m++) {
+        if (cleanText(mData[m][1]) === projectName && cleanText(mData[m][2]) === nPhase && cleanText(mData[m][3]) === nLot && mData[m][4] === formType && mData[m][5] == itemNum && mData[m][16] === "Unsubmitted") {
+          masterSheet.deleteRow(m + 1);
+          break;
+        }
+      }
+    } catch(masterErr) {
+      Logger.log("Error deleting from Master Service Sheet: " + masterErr.message);
+    }
+
+    return "Success! Item #" + itemNum + " has been deleted.";
+  } catch (e) {
+    return "Error: " + e.message;
+  }
+}
+
 function submitUnsubmittedItems(project, phase, lot, hoName, hoEmail) {
   try {
     var projectName = cleanText(project);
