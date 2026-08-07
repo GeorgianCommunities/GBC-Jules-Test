@@ -58,6 +58,8 @@
       .status-assigned { background-color: #3498db; color: white; }
       .status-completed { background-color: #e74c3c; color: white; }
       .status-approved { background-color: #2ecc71; color: white; }
+      .status-closed { background-color: #7f8c8d; color: white; }
+      .status-repair-rejected { background-color: #8b3a3a; color: white; }
 
       /* AI CHAT WIDGET STYLES */
       .ai-chat-launcher { position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px; background-color: #c6a87c; color: #1c2d42; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 10000; transition: transform 0.2s; border: none; padding: 0; font-family: inherit; }
@@ -631,6 +633,8 @@
             <option value="Assigned">Assigned</option>
             <option value="Completed">Completed</option>
             <option value="Approved">Approved</option>
+            <option value="Closed">Closed</option>
+            <option value="Repair Rejected">Repair Rejected</option>
           </select>
         </div>
         
@@ -1621,6 +1625,8 @@
                 if (cellValue === "Assigned") badgeClass = "status-assigned";
                 if (cellValue === "Completed") badgeClass = "status-completed";
                 if (cellValue === "Approved") badgeClass = "status-approved";
+                if (cellValue === "Closed") badgeClass = "status-closed";
+                if (cellValue === "Repair Rejected") badgeClass = "status-repair-rejected";
                 html += "<td><span class='status-badge " + badgeClass + "'>" + safeVal + "</span></td>";
               } 
               else if (j === 13 && cellValue !== "") {
@@ -2060,6 +2066,8 @@
                 if (cellValue === "Assigned") badgeClass = "status-assigned";
                 if (cellValue === "Completed") badgeClass = "status-completed";
                 if (cellValue === "Approved") badgeClass = "status-approved";
+                if (cellValue === "Closed") badgeClass = "status-closed";
+                if (cellValue === "Repair Rejected") badgeClass = "status-repair-rejected";
                 html += "<td><span class='status-badge " + badgeClass + "'>" + safeVal + "</span></td>";
               } 
               else if (j === 13 && cellValue !== "") {
