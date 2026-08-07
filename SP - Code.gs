@@ -13,15 +13,29 @@ const WARRANTY_TEMPLATE_ID = '1loBscI38L9vtywXvl65tohceruLTCF2jo6A1Px0ppxc';
 function doGet(e) {
   setupDailyTrigger();
   if (e && e.parameter && e.parameter.action === 'homeownerFeedback') {
-    return updateHomeownerResponse(
-      e.parameter.project,
-      e.parameter.phase,
-      e.parameter.lot,
-      e.parameter.formName,
-      e.parameter.itemNum,
-      e.parameter.trade,
-      e.parameter.agree
-    );
+    if (e.parameter.agree === 'false') {
+      var template = HtmlService.createTemplateFromFile('DisagreeForm');
+      template.project = e.parameter.project;
+      template.phase = e.parameter.phase;
+      template.lot = e.parameter.lot;
+      template.formName = e.parameter.formName;
+      template.itemNum = e.parameter.itemNum;
+      template.trade = e.parameter.trade;
+      return template.evaluate()
+                     .setTitle("Provide Disagreement Details - Georgian Communities")
+                     .setSandboxMode(HtmlService.SandboxMode.IFRAME)
+                     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+    } else {
+      return updateHomeownerResponse(
+        e.parameter.project,
+        e.parameter.phase,
+        e.parameter.lot,
+        e.parameter.formName,
+        e.parameter.itemNum,
+        e.parameter.trade,
+        e.parameter.agree
+      );
+    }
   }
   return HtmlService.createHtmlOutputFromFile('Index')
       .setTitle('Georgian Build Connect - Service Portal')
@@ -279,6 +293,145 @@ function getOrCreateFolder(parentFolder, folderName) {
   var folders = parentFolder.searchFolders("title = '" + safeName + "' and trashed = false");
   if (folders.hasNext()) { return folders.next(); }
   return parentFolder.createFolder(folderName);
+}
+
+function submitHomeownerDisagreement(formData) {
+  try {
+    var project = formData.project;
+    var phase = formData.phase;
+    var lot = formData.lot;
+    var formName = formData.formName;
+    var itemNum = formData.itemNum;
+    var trade = formData.trade;
+    var reason = formData.reason;
+    var photos = formData.photos || [];
+
+    var clickDateTimeStr = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm:ss");
+    var logMessage = "Homeowner disagreed that the item has been completed. Date/Time: " + clickDateTimeStr + "\nReason: " + reason;
+
+    // 1. Revert status and write logMessage to Additional Information of Master Sheet and Lot Spreadsheet
+    updateServiceItemStatusDirect(project, phase, lot, formName, itemNum, trade, "Repair Rejected", logMessage);
+
+    // 2. Upload photos if any
+    var photoUrls = [];
+    if (photos.length > 0) {
+      var rootFolder = DriveApp.getFolderById(WARRANTY_ROOT_FOLDER_ID);
+      var projectFolder = getOrCreateFolder(rootFolder, project);
+      var phaseFolder = getOrCreateFolder(projectFolder, "Phase " + phase);
+      var lotFolder = getOrCreateFolder(phaseFolder, "Lot " + lot);
+      var subFolder = getOrCreateFolder(lotFolder, formName);
+
+      var startingPicNum = 1;
+      try {
+        var files = subFolder.getFiles();
+        while (files.hasNext()) {
+          var f = files.next();
+          if (f.getName().indexOf("H.O. Photo") > -1) {
+            startingPicNum++;
+          }
+        }
+      } catch(e) {}
+
+      for (var p = 0; p < photos.length; p++) {
+        var photoData = photos[p];
+        var ext = "";
+        if (photoData.fileName.lastIndexOf('.') > -1) {
+          ext = photoData.fileName.substring(photoData.fileName.lastIndexOf('.'));
+        }
+        var picNum = startingPicNum + p;
+        var newFileName = phase + "-" + lot + "-Warranty for " + formName + "-Item " + itemNum + "-H.O. Photo " + picNum + ext;
+
+        var blob = Utilities.newBlob(Utilities.base64Decode(photoData.base64), photoData.mimeType, newFileName);
+        var savedFile = subFolder.createFile(blob);
+        photoUrls.push(savedFile.getUrl());
+      }
+
+      if (photoUrls.length > 0) {
+        var photoUrlsString = photoUrls.join("\n\n");
+        appendPhotoLinksToItem(project, phase, lot, formName, itemNum, trade, photoUrlsString);
+      }
+    }
+
+    // 3. Notify Service Coordinator(s)
+    var coordinators = getServiceCoordinatorEmails(project);
+    if (coordinators.length > 0) {
+      var subject = "Homeowner Disagreement: " + project + " - Lot " + lot + " (Item #" + itemNum + ")";
+      var photoLinksSection = photoUrls.length > 0 ? "\n\nAttached Homeowner Photos:\n" + photoUrls.join("\n") : "";
+      var body = "Hello,\n\n" +
+                 "A homeowner has disagreed with the completion of a service item.\n\n" +
+                 "Project: " + project + "\n" +
+                 "Phase: " + phase + "\n" +
+                 "Lot: " + lot + "\n" +
+                 "Form: " + formName + "\n" +
+                 "Item #: " + itemNum + "\n" +
+                 "Assigned Trade: " + trade + "\n\n" +
+                 "Disagreement Details:\n" +
+                 "Date/Time: " + clickDateTimeStr + "\n" +
+                 "Reason: " + reason + photoLinksSection + "\n\n" +
+                 "The service item status has been reverted to \"Repair Rejected\".\n\n" +
+                 "Thank you,\nGeorgian Build Connect";
+      try {
+        MailApp.sendEmail(coordinators.join(","), subject, body, {name: "Georgian Build Connect"});
+      } catch(e) {
+        Logger.log("Coordinator email failed: " + e.message);
+      }
+    }
+
+    return "Success";
+  } catch (e) {
+    return "Error: " + e.message;
+  }
+}
+
+function appendPhotoLinksToItem(project, phase, lot, formName, itemNum, trade, photoUrlsString) {
+  try {
+    var masterSS = SpreadsheetApp.openById(SERVICE_MASTER_ID);
+    var masterSheet = masterSS.getSheets()[0];
+    var mData = masterSheet.getDataRange().getValues();
+
+    var cProj = cleanText(project), cPhase = cleanText(phase), cLot = cleanText(lot), cForm = cleanText(formName), cItem = cleanText(itemNum), cTrade = cleanText(trade);
+
+    for (var i = 1; i < mData.length; i++) {
+      if (cleanText(mData[i][1]) === cProj && cleanText(mData[i][2]) === cPhase && cleanText(mData[i][3]) === cLot && cleanText(mData[i][4]) === cForm && cleanText(mData[i][5]) === cItem && cleanText(mData[i][11]) === cTrade) {
+         var currentMasterPhoto = String(mData[i][14] || "").trim();
+         var newMasterPhoto = currentMasterPhoto ? currentMasterPhoto + "\n\n" + photoUrlsString : photoUrlsString;
+         masterSheet.getRange(i + 1, 15).setValue(newMasterPhoto);
+         break;
+      }
+    }
+
+    var rootFolder = DriveApp.getFolderById(WARRANTY_ROOT_FOLDER_ID);
+    var projectFolder = getOrCreateFolder(rootFolder, project);
+    var phaseFolder = getOrCreateFolder(projectFolder, "Phase " + phase);
+    var lotFolder = getOrCreateFolder(phaseFolder, "Lot " + lot);
+
+    var sheetName = "Lot " + lot + " - Warranty File";
+    var existingFiles = lotFolder.searchFiles("title = '" + sheetName.replace(/'/g, "\\'") + "' and mimeType = 'application/vnd.google-apps.spreadsheet'");
+
+    if (existingFiles.hasNext()) {
+      var ss = SpreadsheetApp.openById(existingFiles.next().getId());
+      var formTab = ss.getSheetByName(formName);
+      if (formTab) {
+        var fData = formTab.getDataRange().getValues();
+        var hdrs = fData[0].map(function(x){ return String(x).toLowerCase().trim(); });
+        var iPhoto = hdrs.indexOf("photo link");
+        var iTrade = hdrs.indexOf("assigned trade");
+
+        for (var r = 1; r < fData.length; r++) {
+           if (cleanText(fData[r][0]) === cItem && cleanText(fData[r][iTrade]) === cTrade) {
+              if (iPhoto > -1) {
+                var currentLotPhoto = String(fData[r][iPhoto] || "").trim();
+                var newLotPhoto = currentLotPhoto ? currentLotPhoto + "\n\n" + photoUrlsString : photoUrlsString;
+                formTab.getRange(r + 1, iPhoto + 1).setValue(newLotPhoto);
+              }
+              break;
+           }
+        }
+      }
+    }
+  } catch (e) {
+    Logger.log("Error appending photo links: " + e.message);
+  }
 }
 
 // =====================================================================================

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Provide Disagreement Details - Georgian Communities</title>
+    <style>
+      body { font-family: Arial, sans-serif; background-color: #f8f9fc; color: #333; margin: 0; padding: 20px; display: flex; align-items: center; justify-content: center; min-height: 100vh; box-sizing: border-box; }
+      .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 550px; box-sizing: border-box; }
+      h2 { color: #1c2d42; margin-top: 0; text-align: center; }
+      p { font-size: 15px; line-height: 1.5; color: #666; margin-bottom: 20px; }
+      .form-group { margin-bottom: 20px; }
+      label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 14px; color: #1c2d42; }
+      textarea, input[type="file"] { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; font-size: 14px; min-height: 44px; }
+      textarea:focus, input[type="file"]:focus { outline: none; border-color: #1c2d42; }
+      textarea:focus-visible, input[type="file"]:focus-visible, button:focus-visible { outline: 3px solid #c6a87c; }
+      .btn-submit { background-color: #8b3a3a; color: white; border: none; padding: 12px 20px; font-size: 15px; font-weight: bold; border-radius: 4px; cursor: pointer; width: 100%; min-height: 44px; transition: background-color 0.2s; display: inline-flex; align-items: center; justify-content: center; }
+      .btn-submit:hover { background-color: #722c2c; }
+      .btn-submit:disabled { background-color: #ccc; cursor: not-allowed; }
+      .status-msg { margin-top: 15px; text-align: center; font-weight: bold; font-size: 14px; color: #4a6b5d; }
+
+      @media (max-width: 768px) {
+        body { padding: 10px; }
+        .container { padding: 20px; }
+        h2 { font-size: 20px; }
+        p { font-size: 14px; }
+        .btn-submit { font-size: 16px; padding: 14px; min-height: 48px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Provide Disagreement Details</h2>
+      <p>Please let us know why you do not agree that this service order has been successfully completed. You may also attach any supporting pictures.</p>
+
+      <form id="disagreeForm" onsubmit="submitForm(event)">
+        <!-- Hidden inputs containing item details -->
+        <input type="hidden" id="project" value="<?= project ?>">
+        <input type="hidden" id="phase" value="<?= phase ?>">
+        <input type="hidden" id="lot" value="<?= lot ?>">
+        <input type="hidden" id="formName" value="<?= formName ?>">
+        <input type="hidden" id="itemNum" value="<?= itemNum ?>">
+        <input type="hidden" id="trade" value="<?= trade ?>">
+
+        <div class="form-group">
+          <label for="reason">Reason for Disagreement (Required):</label>
+          <textarea id="reason" rows="4" required placeholder="Describe in detail what remains to be completed..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="photos">Attach Pictures (Optional):</label>
+          <input type="file" id="photos" accept="image/*" multiple title="Attach pictures to support your disagreement">
+        </div>
+
+        <button type="submit" id="submitBtn" class="btn-submit">Submit Details</button>
+        <div id="status" class="status-msg"></div>
+      </form>
+    </div>
+
+    <script>
+      function submitForm(event) {
+        event.preventDefault();
+        var reason = document.getElementById("reason").value.trim();
+        var btn = document.getElementById("submitBtn");
+        var statusDiv = document.getElementById("status");
+
+        if (reason === "") {
+          alert("Reason is required.");
+          return;
+        }
+
+        btn.disabled = true;
+        statusDiv.style.color = "#4a6b5d";
+        statusDiv.innerText = "Processing details... (This may take a moment)";
+
+        var formData = {
+          project: document.getElementById("project").value,
+          phase: document.getElementById("phase").value,
+          lot: document.getElementById("lot").value,
+          formName: document.getElementById("formName").value,
+          itemNum: document.getElementById("itemNum").value,
+          trade: document.getElementById("trade").value,
+          reason: reason,
+          photos: []
+        };
+
+        var fileInput = document.getElementById("photos");
+        if (fileInput.files.length > 0) {
+          var filesLoaded = 0;
+          for (var i = 0; i < fileInput.files.length; i++) {
+            (function(file) {
+              var reader = new FileReader();
+              reader.onload = function(e) {
+                formData.photos.push({
+                  fileName: file.name,
+                  mimeType: file.type,
+                  base64: e.target.result.split(',')[1]
+                });
+                filesLoaded++;
+                if (filesLoaded === fileInput.files.length) {
+                  sendDisagreement(formData);
+                }
+              };
+              reader.readAsDataURL(file);
+            })(fileInput.files[i]);
+          }
+        } else {
+          sendDisagreement(formData);
+        }
+      }
+
+      function sendDisagreement(formData) {
+        var btn = document.getElementById("submitBtn");
+        var statusDiv = document.getElementById("status");
+        statusDiv.innerText = "Saving details and uploading files... Please wait.";
+
+        google.script.run
+          .withSuccessHandler(function(response) {
+            statusDiv.innerText = response;
+            if (response.indexOf("Error") === -1) {
+              document.getElementById("disagreeForm").innerHTML = "<h3>Thank You!</h3><p>Your disagreement has been successfully recorded. The trade contractor has been notified to review and address the issue.</p>";
+            } else {
+              btn.disabled = false;
+            }
+          })
+          .withFailureHandler(function(err) {
+            statusDiv.style.color = "#8b3a3a";
+            statusDiv.innerText = "Submission Failed: " + err.message;
+            btn.disabled = false;
+          })
+          .submitHomeownerDisagreement(formData);
+      }
+    </script>
+  </body>
+</html>
