@@ -1,16 +1,18 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <base target="_top">
     <!-- FULLCALENDAR LIBRARY -->
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
     <style>
       body { font-family: Arial, sans-serif; margin: 20px; background-color: #f8f9fc; }
-      .login-container { max-width: 400px; margin: 8% auto; background: white; padding: 25px; border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; }
+      .login-container { max-width: 400px; margin: 8% auto; background: white; padding: 25px; border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; box-sizing: border-box; width: 100%; }
       .portal-container { display: none; }
       
       .tab { display: flex; flex-wrap: wrap; border: 1px solid #dcdcdc; background-color: #2c3e50; border-radius: 5px 5px 0 0; }
-      .tab button { background-color: inherit; color: #f8f9fc; flex: 1 1 auto; border: none; outline: none; cursor: pointer; padding: 14px 10px; font-size: 14px; text-align: center; font-weight: bold; transition: background-color 0.3s; }
+      .tab button { background-color: inherit; color: #f8f9fc; flex: 1 1 auto; border: none; outline: none; cursor: pointer; padding: 14px 10px; font-size: 14px; text-align: center; font-weight: bold; transition: background-color 0.3s; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; }
       .tab button:hover { background-color: #3b536b; color: white; }
       .tab button.active { background-color: #c6a87c; color: #1c2d42; }
       
@@ -69,16 +71,21 @@
       .fc-event { cursor: pointer; }
 
       @media (max-width: 768px) {
-        .filter-container { flex-direction: column; align-items: stretch; }
+        body { margin: 10px; }
+        .login-container { margin: 15% auto; padding: 15px; }
+        .filter-container { flex-direction: column; align-items: stretch; gap: 12px; }
+        .filter-container select { width: 100%; min-height: 44px; padding: 10px; }
         .form-row { flex-direction: column; gap: 15px; }
-        .form-row input, .form-row select, .form-row textarea, .form-row div { width: 100%; box-sizing: border-box; }
-        .btn-submit { width: 100%; margin-bottom: 5px; padding: 15px; font-size: 16px; }
+        .form-row input, .form-row select, .form-row textarea, .form-row div { width: 100%; box-sizing: border-box; min-height: 44px; }
+        .btn-submit { width: 100%; margin-bottom: 5px; padding: 15px; font-size: 16px; min-height: 48px; }
+        .btn-filter, .btn-clear { width: 100%; padding: 12px; font-size: 15px; min-height: 44px; }
+        .btn-folder, .btn-schedule { padding: 10px 16px; font-size: 14px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; }
         table, thead, tbody, th, td, tr { display: block; width: 100%; box-sizing: border-box; min-width: unset; }
         th { display: none; }
         tr { margin-bottom: 15px; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); background: #fff; }
-        td { border: none; border-bottom: 1px solid #eee; position: relative; padding: 10px 10px 10px 45%; min-height: 24px; text-align: right; font-size: 14px; word-break: break-word; }
+        td { border: none; border-bottom: 1px solid #eee; position: relative; padding: 12px 10px 12px 45%; min-height: 44px; text-align: right; font-size: 14px; word-break: break-word; box-sizing: border-box; display: flex; align-items: center; justify-content: flex-end; }
         td:last-child { border-bottom: 0; }
-        td:before { position: absolute; top: 10px; left: 10px; width: 40%; padding-right: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: bold; content: attr(data-label); color: #1c2d42; text-align: left; }
+        td:before { position: absolute; top: 50%; transform: translateY(-50%); left: 10px; width: 40%; padding-right: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: bold; content: attr(data-label); color: #1c2d42; text-align: left; }
       }
     </style>
   </head>
@@ -103,10 +110,10 @@
 
     <div id="portalDashboard" class="portal-container">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:10px;">
-        <h2 style="margin:0; color:#333;">Georgian Build Connect - Contractor Portal</h2>
-        <div style="display:flex; align-items:center; gap:15px;">
-          <button id="refreshBtn" class="btn-folder" style="background-color: #1c2d42; font-weight: bold; padding: 8px 12px;" onclick="refreshPortalData()">🔄 Refresh</button>
-          <span style="font-size:14px; background:#e9ecef; padding:6px 12px; border-radius:4px;">User: <b id="userLabel"></b></span>
+        <h2 style="margin:0; color:#333; font-size: 20px;">Georgian Build Connect</h2>
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <button id="refreshBtn" class="btn-folder" style="background-color: #1c2d42; font-weight: bold; padding: 10px 15px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center;" onclick="refreshPortalData()">🔄 Refresh</button>
+          <span style="font-size:14px; background:#e9ecef; padding:8px 12px; border-radius:4px; display: inline-flex; align-items: center; min-height: 44px; box-sizing: border-box;">User: &nbsp;<b id="userLabel"></b></span>
         </div>
       </div>
       

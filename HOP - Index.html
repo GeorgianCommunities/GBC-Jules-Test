@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <base target="_top">
     <style>
       body { font-family: Arial, sans-serif; margin: 20px; background-color: #f8f9fc; }
@@ -8,20 +10,20 @@
       .portal-container { display: none; }
       
       .tab { display: flex; flex-wrap: wrap; border: 1px solid #dcdcdc; background-color: #2c3e50; border-radius: 5px 5px 0 0; }
-      .tab button { background-color: inherit; color: #f8f9fc; flex: 1 1 auto; border: none; outline: none; cursor: pointer; padding: 14px 10px; font-size: 14px; text-align: center; font-weight: bold; transition: background-color 0.3s; }
+      .tab button { background-color: inherit; color: #f8f9fc; flex: 1 1 auto; border: none; outline: none; cursor: pointer; padding: 14px 10px; font-size: 14px; text-align: center; font-weight: bold; transition: background-color 0.3s; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; }
       .tab button:hover { background-color: #3b536b; color: white; }
       .tab button.active { background-color: #c6a87c; color: #1c2d42; }
       
       .tabcontent { padding: 20px; border: 1px solid #dcdcdc; border-top: none; background: white; border-radius: 0 0 5px 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
       .form-row { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; text-align: left; }
-      .form-row input, .form-row select, .form-row textarea { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; font-family: inherit; }
+      .form-row input, .form-row select, .form-row textarea { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; font-family: inherit; min-height: 44px; box-sizing: border-box; }
       
       .filter-container { background: #e6ecef; padding: 15px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #d1d8dc; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
       .filter-container select { flex: 1; padding: 8px; min-width: 120px; border: 1px solid #ccc; border-radius: 3px; font-family: inherit; }
       
-      .btn-submit { background-color: #1c2d42; color: white; padding: 12px; border: none; cursor: pointer; border-radius: 4px; width: 100%; font-weight: bold; font-size: 15px; transition: 0.2s; }
+      .btn-submit { background-color: #1c2d42; color: white; padding: 12px; border: none; cursor: pointer; border-radius: 4px; width: 100%; font-weight: bold; font-size: 15px; transition: 0.2s; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; }
       .btn-submit:hover { background-color: #111d2b; }
-      .btn-clear { background-color: #7f8c8d; color: white; padding: 8px 15px; border: none; cursor: pointer; border-radius: 3px; font-weight: bold; }
+      .btn-clear { background-color: #7f8c8d; color: white; padding: 10px 15px; border: none; cursor: pointer; border-radius: 3px; font-weight: bold; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; }
       
       table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; background: white; min-width: 700px; }
       th, td { border: 1px solid #e0e0e0; padding: 10px 8px; text-align: left; }
@@ -40,6 +42,25 @@
       .detail-label { font-weight: bold; width: 150px; color: #333; }
       
       #warrantyGridBox { overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
+
+      @media (max-width: 768px) {
+        body { margin: 10px; }
+        .login-container { margin: 15% auto; padding: 15px; box-sizing: border-box; width: 100%; }
+        .filter-container { flex-direction: column; align-items: stretch; gap: 12px; }
+        .filter-container select { width: 100%; min-height: 44px; padding: 10px; }
+        .form-row { flex-direction: column; gap: 15px; }
+        .form-row input, .form-row select, .form-row textarea, .form-row div { width: 100%; box-sizing: border-box; min-height: 44px; }
+        .btn-submit { width: 100%; margin-bottom: 5px; padding: 15px; font-size: 16px; min-height: 48px; }
+        .btn-clear { width: 100%; padding: 12px; font-size: 15px; min-height: 44px; }
+        .detail-row { flex-direction: column; gap: 4px; padding: 10px 0; }
+        .detail-label { width: 100%; }
+        table, thead, tbody, th, td, tr { display: block; width: 100%; box-sizing: border-box; min-width: unset; }
+        th { display: none; }
+        tr { margin-bottom: 15px; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); background: #fff; }
+        td { border: none; border-bottom: 1px solid #eee; position: relative; padding: 12px 10px 12px 45%; min-height: 44px; text-align: right; font-size: 14px; word-break: break-word; display: flex; align-items: center; justify-content: flex-end; box-sizing: border-box; }
+        td:last-child { border-bottom: 0; }
+        td:before { position: absolute; top: 50%; transform: translateY(-50%); left: 10px; width: 40%; padding-right: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: bold; content: attr(data-label); color: #1c2d42; text-align: left; }
+      }
     </style>
   </head>
   <body>
@@ -107,10 +128,10 @@
           <form id="hoManualEntryForm" onsubmit="handleHoManualEntry(event)">
             <div class="form-row">
               <label style="font-size:12px; font-weight:bold;">Project Details</label>
-              <div style="display:flex; gap:10px;">
-                <input type="text" id="hoMwProject" placeholder="Project Name" readonly style="background:#e9ecef;">
-                <input type="text" id="hoMwPhase" placeholder="Phase" readonly style="background:#e9ecef;">
-                <input type="text" id="hoMwLot" placeholder="Lot #" readonly style="background:#e9ecef;">
+              <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <input type="text" id="hoMwProject" placeholder="Project Name" readonly style="background:#e9ecef; flex: 1; min-width: 120px;">
+                <input type="text" id="hoMwPhase" placeholder="Phase" readonly style="background:#e9ecef; flex: 1; min-width: 80px;">
+                <input type="text" id="hoMwLot" placeholder="Lot #" readonly style="background:#e9ecef; flex: 1; min-width: 80px;">
               </div>
             </div>
             <div class="form-row" style="margin-top:10px;">
@@ -125,9 +146,9 @@
             </div>
             <div class="form-row">
               <label style="font-size:12px; font-weight:bold;">Item Location</label>
-              <div style="display:flex; gap:10px;">
-                <input type="text" id="hoMwLocation" placeholder="Location (e.g., Main Floor)" required>
-                <input type="text" id="hoMwRoomArea" placeholder="Room/Area (e.g., Kitchen)" required>
+              <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <input type="text" id="hoMwLocation" placeholder="Location (e.g., Main Floor)" required style="flex: 1; min-width: 120px;">
+                <input type="text" id="hoMwRoomArea" placeholder="Room/Area (e.g., Kitchen)" required style="flex: 1; min-width: 120px;">
               </div>
             </div>
             <div class="form-row">

@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <base target="_top">
     <style>
       body { font-family: Arial, sans-serif; margin: 20px; background-color: #f8f9fc; color: #333; }
       
       .tab { display: flex; flex-wrap: wrap; border: 1px solid #dcdcdc; background-color: #2c3e50; border-radius: 5px 5px 0 0; }
-      .tab button { background-color: inherit; color: white; flex: 1 1 auto; border: none; outline: none; cursor: pointer; padding: 14px 10px; font-size: 14px; text-align: center; font-weight: bold; transition: 0.2s;}
+      .tab button { background-color: inherit; color: white; flex: 1 1 auto; border: none; outline: none; cursor: pointer; padding: 14px 10px; font-size: 14px; text-align: center; font-weight: bold; transition: 0.2s; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box;}
       .tab button:hover { background-color: #3b536b; color: white; }
       .tab button.active { background-color: #c6a87c; color: #1c2d42; }
       
@@ -14,16 +16,16 @@
       .form-container { background: #f0f3f5; padding: 15px; margin-bottom: 20px; border-radius: 5px; border: 1px solid #e1e5e8; }
       .filter-container { background: #e6ecef; padding: 15px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #d1d8dc; }
       .form-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;}
-      .form-row input[type="text"], .form-row input[type="email"], .form-row input[type="number"], .form-row input[type="password"], .form-row select, .form-row textarea { flex: 1; padding: 8px; min-width: 120px; border: 1px solid #ccc; border-radius: 3px; font-family: inherit;}
+      .form-row input[type="text"], .form-row input[type="email"], .form-row input[type="number"], .form-row input[type="password"], .form-row select, .form-row textarea { flex: 1; padding: 10px; min-width: 120px; border: 1px solid #ccc; border-radius: 3px; font-family: inherit; min-height: 44px; box-sizing: border-box; }
       
-      .btn-submit { background-color: #4a6b5d; color: white; padding: 10px 15px; border: none; cursor: pointer; border-radius: 3px; transition: 0.2s; font-weight: bold; }
+      .btn-submit { background-color: #4a6b5d; color: white; padding: 10px 15px; border: none; cursor: pointer; border-radius: 3px; transition: 0.2s; font-weight: bold; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; }
       .btn-submit:hover { background-color: #385247; }
-      .btn-filter { background-color: #1c2d42; color: white; padding: 8px 15px; border: none; cursor: pointer; border-radius: 3px; font-weight: bold; }
+      .btn-filter { background-color: #1c2d42; color: white; padding: 10px 15px; border: none; cursor: pointer; border-radius: 3px; font-weight: bold; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; }
       .btn-filter:hover { background-color: #111d2b; }
-      .btn-clear { background-color: #7f8c8d; color: white; padding: 8px 15px; border: none; cursor: pointer; border-radius: 3px; }
-      .btn-folder { background-color: #647b8c; color: white; padding: 6px 12px; text-decoration: none; border-radius: 3px; font-size: 13px; display: inline-block; cursor: pointer; transition: 0.2s; border: none; }
+      .btn-clear { background-color: #7f8c8d; color: white; padding: 10px 15px; border: none; cursor: pointer; border-radius: 3px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; }
+      .btn-folder { background-color: #647b8c; color: white; padding: 8px 14px; text-decoration: none; border-radius: 3px; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; border: none; min-height: 44px; box-sizing: border-box; }
       .btn-folder:hover { background-color: #4c606e; }
-      .btn-delete { background-color: #8b3a3a; color: white; padding: 5px 10px; border: none; cursor: pointer; border-radius: 3px; }
+      .btn-delete { background-color: #8b3a3a; color: white; padding: 8px 12px; border: none; cursor: pointer; border-radius: 3px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; }
       .btn-delete:hover { background-color: #6e2c2c; }
       .help-text { font-size: 11px; color: #666; width: 100%; display: block; margin-top: 5px; margin-bottom: 5px; }
       
@@ -51,7 +53,7 @@
       .close:focus-visible { outline: 2px solid #1c2d42; outline-offset: 2px; }
       .history-box { background: #f0f3f5; border: 1px solid #d1d8dc; padding: 12px; height: 120px; overflow-y: auto; margin-bottom: 15px; font-size: 13px; border-radius: 4px;}
 
-      .settings-btn { position: absolute; top: 20px; right: 20px; background-color: #1c2d42; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; display: none; z-index: 100; }
+      .settings-btn { background-color: #1c2d42; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; display: none; z-index: 100; min-height: 44px; align-items: center; justify-content: center; box-sizing: border-box; }
       .settings-btn:hover { background-color: #3b536b; }
 
       .checkbox-group { border: 1px solid #ccc; border-radius: 3px; padding: 8px; background: white; max-height: 120px; overflow-y: auto; font-size: 13px; line-height: 1.8; }
@@ -80,16 +82,18 @@
       .ai-chat-footer button:hover { background-color: #111d2b; }
       
       @media (max-width: 768px) {
+        body { margin: 10px; }
         .form-row { flex-direction: column; gap: 15px; }
-        .form-row input, .form-row select, .form-row textarea, .form-row div { width: 100%; box-sizing: border-box; }
-        .btn-submit, .btn-filter, .btn-clear { width: 100%; margin-bottom: 5px; padding: 15px; font-size: 16px; }
+        .form-row input, .form-row select, .form-row textarea, .form-row div { width: 100%; box-sizing: border-box; min-height: 44px; }
+        .btn-submit, .btn-filter, .btn-clear { width: 100%; margin-bottom: 5px; padding: 15px; font-size: 16px; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; }
+        .btn-folder, .btn-delete { padding: 10px 16px; font-size: 14px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; }
         .modal-content { width: 95%; margin: 10% auto; padding: 15px; }
         table, thead, tbody, th, td, tr { display: block; width: 100%; box-sizing: border-box; min-width: unset; }
         th { display: none; }
         tr { margin-bottom: 15px; border: 1px solid #dcdcdc; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); background: #fff; }
-        td { border: none; border-bottom: 1px solid #eee; position: relative; padding: 10px 10px 10px 45%; min-height: 24px; text-align: right; font-size: 14px; word-break: break-word; }
+        td { border: none; border-bottom: 1px solid #eee; position: relative; padding: 12px 10px 12px 45%; min-height: 44px; text-align: right; font-size: 14px; word-break: break-word; display: flex; align-items: center; justify-content: flex-end; box-sizing: border-box; }
         td:last-child { border-bottom: 0; }
-        td:before { position: absolute; top: 10px; left: 10px; width: 40%; padding-right: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: bold; content: attr(data-label); color: #1c2d42; text-align: left; }
+        td:before { position: absolute; top: 50%; transform: translateY(-50%); left: 10px; width: 40%; padding-right: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: bold; content: attr(data-label); color: #1c2d42; text-align: left; }
       }
 
       @media (max-width: 480px) {
@@ -100,9 +104,13 @@
   </head>
   <body>
 
-    <h2>Georgian Build Connect</h2>
-    <button id="userSettingsBtn" class="settings-btn" onclick="openUserSettingsModal()">⚙️ Settings</button>
-    <button id="refreshBtn" class="settings-btn" style="right: 130px;" onclick="refreshAppData()">🔄 Refresh</button>
+    <div class="header-section" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+      <h2 style="margin: 0;">Georgian Build Connect</h2>
+      <div class="header-buttons" style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button id="refreshBtn" class="btn-folder" style="background-color: #1c2d42; font-weight: bold; min-height: 44px; display: inline-flex; align-items: center; justify-content: center;" onclick="refreshAppData()">🔄 Refresh</button>
+        <button id="userSettingsBtn" class="btn-folder" style="background-color: #1c2d42; font-weight: bold; min-height: 44px; display: inline-flex; align-items: center; justify-content: center;" onclick="openUserSettingsModal()">⚙️ Settings</button>
+      </div>
+    </div>
 
     <!-- LOGIN WALL -->
     <div id="loginWall">
@@ -520,7 +528,9 @@
       var globalLotMap = {}; var globalTradeMap = {}; var globalLotOptionsMap = {}; var globalLotHierarchy = {}; 
       var globalCostCodes = []; 
 
-      // --- USER SETTINGS MODAL LOGIC ---
+      // On initialization, make sure refresh button and settings button display status is correctly handled
+      // if those buttons were managed by the previous settings-btn logic. Since we converted them to header-section,
+      // they will behave normally. Let's ensure initializeApp doesn't break.
       function openUserSettingsModal() {
         document.getElementById("userSettingsModal").style.display = "block";
         document.getElementById("settingDefaultTab").value = currentUser.defaultTab || "LotDirectory";
@@ -625,8 +635,10 @@
             currentUser = res;
             document.getElementById("loginWall").style.display = "none";
             document.getElementById("mainApp").style.display = "block";
-            document.getElementById("userSettingsBtn").style.display = "block"; 
-            document.getElementById("refreshBtn").style.display = "block";
+            var setBtn = document.getElementById("userSettingsBtn");
+            var refBtn = document.getElementById("refreshBtn");
+            if (setBtn) setBtn.style.display = "inline-flex";
+            if (refBtn) refBtn.style.display = "inline-flex";
             
             if (currentUser.defaultTab && currentUser.defaultTab.trim() !== "") {
               var tabBtn = document.querySelector("button[onclick*='" + currentUser.defaultTab + "']");
